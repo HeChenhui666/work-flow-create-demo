@@ -1,5 +1,5 @@
 import type { Node as RFNode, Edge as RFEdge } from '@xyflow/react'
-import type { WorkflowDefinition, WorkflowNode } from './workflow'
+import type { WorkflowDefinition } from './workflow'
 import { NODE_DEFINITIONS, type NodeType } from './nodeDefinitions'
 
 export function definitionToRF(def: WorkflowDefinition): { nodes: RFNode[]; edges: RFEdge[] } {
@@ -34,7 +34,7 @@ export function definitionToRF(def: WorkflowDefinition): { nodes: RFNode[]; edge
 export function rfToDefinition(
   nodes: RFNode[],
   edges: RFEdge[],
-  meta:  { id: string; name: string }
+  meta:  { id: string; name: string; version?: number }
 ): WorkflowDefinition {
   return {
     id:   meta.id,
@@ -53,7 +53,7 @@ export function rfToDefinition(
       targetHandle: e.targetHandle ?? '',
     })),
     metadata: {
-      version:   1,
+      version:   meta.version ?? 1,
       updatedAt: new Date().toISOString(),
     },
   }
