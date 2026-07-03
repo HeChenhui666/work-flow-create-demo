@@ -29,4 +29,10 @@ describe('nodeDefinitions', () => {
     expect(def.inputs).toHaveLength(3)
     expect(def.outputs).toHaveLength(1)
   })
+
+  it('每个节点 color 都是合法的 hex 颜色', () => {
+    NODE_TYPES.forEach(type => {
+      expect(NODE_DEFINITIONS[type].color).toMatch(/^#[0-9a-f]{6}$/i)
+    })
+  })
 })
