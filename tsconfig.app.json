@@ -25,7 +25,10 @@
     /* Path aliases */
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
+    "paths": { "@/*": ["./src/*"] },
+
+    /* Test globals */
+    "types": ["vitest/globals"]
   },
   "include": ["src"]
 }
