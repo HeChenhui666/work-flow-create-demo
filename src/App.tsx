@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import type { ReactFlowInstance } from '@xyflow/react'
 import { FlowCanvas } from './components/FlowCanvas'
 import { NodePalette } from './components/NodePalette'
@@ -7,6 +7,7 @@ import { PropertyInspector } from './components/PropertyInspector'
 import { ExecutionLog } from './components/ExecutionLog'
 import { useJsonIO } from './hooks/useJsonIO'
 import { useMockExecution } from './hooks/useMockExecution'
+import { useAutoSave } from './hooks/useAutoSave'
 import { useViewportStore } from './stores/viewportStore'
 import { useWorkflowStore } from './stores/workflowStore'
 import { useExecutionStore } from './stores/executionStore'
@@ -15,8 +16,26 @@ export default function App() {
   const { exportJson, importJson, fileInputRef, handleFileChange } = useJsonIO()
   const { runExecution } = useMockExecution()
   const { addBookmark } = useViewportStore()
-  const { validationErrors, nodes, edges } = useWorkflowStore()
+  const { validationErrors, nodes, edges, isDirty } = useWorkflowStore()
   const isRunning = useExecutionStore((s) => s.isRunning)
+
+  useAutoSave({ nodes, edges, isDirty })
+
+  useEffect(() => {
+    const saved = localStorage.getItem('workflow-autosave')
+    if (!saved) return
+    try {
+      const { nodes: savedNodes, edges: savedEdges, savedAt } = JSON.parse(saved)
+      if (savedNodes?.length > 0) {
+        const date = new Date(savedAt).toLocaleString()
+        const ok = window.confirm(`发现上次自动保存的工作流（${date}），是否恢复？`)
+        if (ok) {
+          useWorkflowStore.getState().setNodes(savedNodes)
+          useWorkflowStore.getState().setEdges(savedEdges)
+        }
+      }
+    } catch (_) {}
+  }, [])
 
   const handleRun = useCallback(() => {
     if (!isRunning) runExecution(nodes, edges)
