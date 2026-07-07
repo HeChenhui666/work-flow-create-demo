@@ -24,8 +24,10 @@ import { useDnD } from '../hooks/useDnD'
 import { NODE_DEFINITIONS, type NodeType } from '../schemas/nodeDefinitions'
 import { LoadCheckpointNode, CLIPEncodeNode, EmptyLatentNode, KSamplerNode, VAEDecodeNode } from './nodes/WorkflowNodes'
 import { NoteNode } from './nodes/NoteNode'
+import { LoRALoaderNode, ImageLoadNode, ImagePreviewNode, UpscalerNode } from './nodes/ExtendedNodes'
 import { TypedEdge } from './edges/TypedEdge'
 import { ContextMenu, type ContextMenuItem } from './ContextMenu'
+import { AlignmentToolbar } from './AlignmentToolbar'
 
 // 节点类型注册表
 const nodeTypes = {
@@ -35,6 +37,10 @@ const nodeTypes = {
   KSampler: KSamplerNode,
   VAEDecode: VAEDecodeNode,
   Note: NoteNode,
+  LoRALoader: LoRALoaderNode,
+  ImageLoad: ImageLoadNode,
+  ImagePreview: ImagePreviewNode,
+  Upscaler: UpscalerNode,
 }
 
 // 边类型注册表
@@ -105,6 +111,9 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
     y: number
     nodeId?: string
   }>({ visible: false, x: 0, y: 0 })
+
+  // 多选节点状态（用于对齐工具栏）
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([])
 
   // 连线校验回调
   const handleIsValidConnection = useCallback(
@@ -179,11 +188,10 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
       onDrop(event, (newNode) => {
-        setNodes((nds) => [...nds, newNode as Node])
         addNode(newNode as Node)
       })
     },
-    [onDrop, setNodes, addNode],
+    [onDrop, addNode],
   )
 
   // 右键菜单处理
@@ -295,9 +303,22 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
     (params: OnSelectionChangeParams) => {
       const selectedNode = params.nodes[0]
       setSelectedNodeId(selectedNode ? selectedNode.id : null)
+      setSelectedNodes(params.nodes)
     },
     [setSelectedNodeId],
   )
+
+  // 对齐操作回调
+  const handleAlign = useCallback((alignedNodes: Node[]) => {
+    setNodes((nds) => nds.map((n) => {
+      const aligned = alignedNodes.find((a) => a.id === n.id)
+      return aligned ? { ...n, position: aligned.position } : n
+    }))
+    setStoreNodes(storeNodes.map((n) => {
+      const aligned = alignedNodes.find((a) => a.id === n.id)
+      return aligned ? { ...n, position: aligned.position } : n
+    }))
+  }, [setNodes, setStoreNodes, storeNodes])
 
   // 节点删除回调（键盘 Delete/Backspace 或右键菜单触发）
   const handleNodesDelete: OnNodesDelete = useCallback(
@@ -383,7 +404,12 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
   )
 
   return (
-    <div className="h-full w-full" data-testid="flow-canvas">
+    <div
+      className="h-full w-full"
+      data-testid="flow-canvas"
+      onDrop={handleDrop}
+      onDragOver={onDragOver}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -394,8 +420,6 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
         onConnect={onConnect}
         isValidConnection={handleIsValidConnection}
         onInit={handleInit}
-        onDrop={handleDrop}
-        onDragOver={onDragOver}
         onContextMenu={(event) => handleContextMenu(event)}
         onNodeContextMenu={(event, node) => handleContextMenu(event, node.id)}
         onSelectionChange={handleSelectionChange}
@@ -433,6 +457,8 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
           className="rounded-lg border border-gray-200 shadow-sm"
         />
       </ReactFlow>
+
+      <AlignmentToolbar selectedNodes={selectedNodes} onAlign={handleAlign} />
 
       <ContextMenu
         x={contextMenu.x}

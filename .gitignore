@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Documentation and plans (not for commit)
+docs/
+.aone_copilot/

@@ -26,6 +26,10 @@ export function definitionToRF(def: WorkflowDefinition): { nodes: RFNode[]; edge
     target:       e.target,
     targetHandle: e.targetHandle,
     type:         'typed',
+    data: {
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle,
+    },
   }))
 
   return { nodes, edges }

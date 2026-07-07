@@ -3,7 +3,7 @@ import { NODE_TYPES } from './nodeDefinitions'
 
 export type { NodeType } from './nodeDefinitions'
 
-const nodeTypeSchema = z.enum(NODE_TYPES)
+const nodeTypeSchema = z.string()
 
 const workflowNodeSchema = z.object({
   id:       z.string(),

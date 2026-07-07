@@ -2,9 +2,10 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { useViewport } from '@xyflow/react'
 import { PORT_COLORS, type PortType } from '../../schemas/portRegistry'
-import { NODE_TYPE_LABELS, PORT_TYPE_LABELS } from '../../schemas/nodeDefinitions'
+import { NODE_TYPE_LABELS } from '../../schemas/nodeDefinitions'
 import { useWorkflowStore } from '../../stores/workflowStore'
 import { useExecutionStore, type NodeStatus } from '../../stores/executionStore'
+import { validateKSamplerConfig } from '../../utils/paramValidation'
 import type { BaseNodeData } from './BaseNode'
 
 const ZOOM_FAR = 0.4
@@ -101,10 +102,10 @@ export function NodeStatusBadge({ nodeId }: { nodeId: string }) {
   const progress = useExecutionStore((s) => s.nodeProgresses[nodeId])
 
   const colors: Record<NodeStatus, string> = {
-    idle:    'bg-gray-300',
+    idle: 'bg-gray-300',
     running: 'bg-blue-500 animate-pulse',
     success: 'bg-green-500',
-    error:   'bg-red-500',
+    error: 'bg-red-500',
   }
 
   return (
@@ -126,7 +127,7 @@ function FormContainer({ children }: { children: React.ReactNode }) {
       onClick={stopAllPointerEvents}
       onPointerDown={stopAllPointerEvents}
       onTouchStart={stopAllPointerEvents}
-      style={{ pointerEvents: 'auto' }}
+      style={{ pointerEvents: 'auto', width: 'max-content' }}
     >
       {children}
     </div>
@@ -171,14 +172,14 @@ export const LoadCheckpointNode = memo(function LoadCheckpointNode({ data, id }:
   }
 
   return (
-    <div className="nowheel relative min-w-[200px] rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
       <NodeStatusBadge nodeId={id} />
-      <div className="mb-2 text-sm font-bold text-gray-900">{displayLabel}</div>
+      <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <FormContainer>
         <div className="space-y-2">
           <label className="block text-xs text-gray-500">模型</label>
           <select
-            className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+            className="w-full rounded border border-gray-300 px-2 py-1 text-xs truncate"
             value={(config.modelName as string) || ''}
             onChange={(e) => handleConfigChange('modelName', e.target.value)}
           >
@@ -239,9 +240,9 @@ export const CLIPEncodeNode = memo(function CLIPEncodeNode({ data, id }: Workflo
   }
 
   return (
-    <div className="nowheel relative min-w-[220px] rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
       <NodeStatusBadge nodeId={id} />
-      <div className="mb-2 text-sm font-bold text-gray-900">{displayLabel}</div>
+      <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <FormContainer>
         <div className="space-y-2">
           <div>
@@ -308,9 +309,9 @@ export const EmptyLatentNode = memo(function EmptyLatentNode({ data, id }: Workf
   }
 
   return (
-    <div className="nowheel relative min-w-[180px] rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
       <NodeStatusBadge nodeId={id} />
-      <div className="mb-2 text-sm font-bold text-gray-900">{displayLabel}</div>
+      <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <FormContainer>
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -350,6 +351,15 @@ export const EmptyLatentNode = memo(function EmptyLatentNode({ data, id }: Workf
 })
 
 /**
+ * KSampler 预设配置
+ */
+const KSAMPLER_PRESETS = [
+  { name: '快速草图', steps: 10, cfg: 5.0, sampler: 'euler', scheduler: 'normal' },
+  { name: '标准质量', steps: 20, cfg: 7.0, sampler: 'euler_a', scheduler: 'karras' },
+  { name: '精细出图', steps: 50, cfg: 7.5, sampler: 'dpmpp_2m', scheduler: 'karras' },
+] as const
+
+/**
  * KSampler 节点 - 采样器核心
  * 输入: MODEL, CONDITIONING, LATENT | 输出: LATENT
  */
@@ -367,6 +377,11 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
     [id, config, updateNodeData],
   )
 
+  // Hooks 必须在所有条件返回之前调用
+  const kSamplerProgress = useExecutionStore((s) => s.nodeProgresses[id])
+  const kSamplerStatus = useExecutionStore((s) => s.nodeStatuses[id] ?? 'idle')
+  const [selectedPreset, setSelectedPreset] = useState<string>('')
+
   if (zoom < ZOOM_FAR) {
     return <div className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100" style={{ backgroundColor: color }}>KSM</div>
   }
@@ -381,13 +396,10 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
     )
   }
 
-  const kSamplerProgress = useExecutionStore((s) => s.nodeProgresses[id])
-  const kSamplerStatus = useExecutionStore((s) => s.nodeStatuses[id] ?? 'idle')
-
   return (
-    <div className="nowheel relative min-w-[220px] rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
       <NodeStatusBadge nodeId={id} />
-      <div className="mb-2 text-sm font-bold text-gray-900">{displayLabel}</div>
+      <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       {kSamplerStatus === 'running' && kSamplerProgress !== undefined && (
         <div className="mb-2 mx-0">
           <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -400,6 +412,24 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
         </div>
       )}
       <FormContainer>
+        {/* 预设下拉 */}
+        <select
+          className="w-full text-xs border border-gray-200 rounded px-1 py-0.5 mb-2"
+          value={selectedPreset}
+          onChange={(e) => {
+            const index = Number(e.target.value)
+            const preset = KSAMPLER_PRESETS[index]
+            if (!preset) return
+            setSelectedPreset(e.target.value)
+            updateNodeData(id, { config: { ...config, steps: preset.steps, cfg: preset.cfg, sampler: preset.sampler, scheduler: preset.scheduler } })
+          }}
+        >
+          <option value="" disabled>选择预设...</option>
+          {KSAMPLER_PRESETS.map((preset, index) => (
+            <option key={preset.name} value={String(index)}>{preset.name}</option>
+          ))}
+        </select>
+
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="block text-xs text-gray-500">步数</label>
@@ -430,7 +460,7 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
               onChange={(e) => handleConfigChange('sampler', e.target.value)}
             >
               <option value="euler">Euler</option>
-              <option value="euler_ancestral">Euler Ancestral</option>
+              <option value="euler_a">Euler Ancestral</option>
               <option value="heun">Heun</option>
               <option value="dpmpp_2m">DPM++ 2M</option>
             </select>
@@ -449,14 +479,33 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
           </div>
           <div className="col-span-2">
             <label className="block text-xs text-gray-500">种子</label>
-            <input
-              type="number"
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
-              value={(config.seed as number) ?? 42}
-              onChange={(e) => handleConfigChange('seed', Number(e.target.value))}
-            />
+            <div className="flex items-center gap-1 mt-1">
+              <input
+                type="number"
+                className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs"
+                value={(config.seed as number) ?? -1}
+                onChange={(e) => handleConfigChange('seed', Number(e.target.value))}
+              />
+              <button
+                title="随机种子"
+                onClick={() => handleConfigChange('seed', Math.floor(Math.random() * 2 ** 32))}
+                className="text-xs px-1.5 py-1 bg-gray-100 hover:bg-gray-200 rounded"
+              >🎲</button>
+              <button
+                title="复制种子"
+                onClick={() => navigator.clipboard.writeText(String((config.seed as number) ?? -1))}
+                className="text-xs px-1.5 py-1 bg-gray-100 hover:bg-gray-200 rounded"
+              >📋</button>
+            </div>
           </div>
         </div>
+
+        {/* 验证警告 */}
+        {validateKSamplerConfig({ steps: (config.steps as number) ?? 20, cfg: (config.cfg as number) ?? 7 }).map((warning, index) => (
+          <div key={index} className="text-[10px] text-amber-600 flex items-start gap-1 mt-1">
+            <span>⚠️</span><span>{warning}</span>
+          </div>
+        ))}
       </FormContainer>
       {inputs.map((input, index) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL, top: `${((index + 1) / (inputs.length + 1)) * 100}%` }} />)}
       {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL }} />)}
@@ -489,9 +538,9 @@ export const VAEDecodeNode = memo(function VAEDecodeNode({ data, id }: WorkflowN
   }
 
   return (
-    <div className="relative min-w-[180px] rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div className="relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
       <NodeStatusBadge nodeId={id} />
-      <div className="mb-2 text-sm font-bold text-gray-900">{displayLabel}</div>
+      <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <div className="text-xs text-gray-400">将潜空间数据解码为像素图像</div>
       {inputs.map((input, index) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL, top: `${((index + 1) / (inputs.length + 1)) * 100}%` }} />)}
       {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL }} />)}

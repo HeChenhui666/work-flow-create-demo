@@ -13,7 +13,7 @@ export function ExecutionLog() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900 text-gray-100 font-mono text-xs select-none">
+    <div className="shrink-0 border-t border-gray-200 bg-gray-900 text-gray-100 font-mono text-xs select-none">
       <button
         className="flex w-full items-center gap-2 px-4 py-1.5 hover:bg-gray-800 transition-colors"
         onClick={() => setOpen((v) => !v)}

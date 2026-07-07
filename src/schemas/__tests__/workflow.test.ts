@@ -16,9 +16,9 @@ describe('workflowDefinitionSchema', () => {
     expect(() => workflowDefinitionSchema.parse(validDef)).not.toThrow()
   })
 
-  it('拒绝非法节点类型', () => {
-    const invalid = { ...validDef, nodes: [{ ...validDef.nodes[0], type: 'UNKNOWN' }] }
-    expect(() => workflowDefinitionSchema.parse(invalid)).toThrow()
+  it('接受任意字符串节点类型（插件化注册）', () => {
+    const custom = { ...validDef, nodes: [{ ...validDef.nodes[0], type: 'CustomPluginNode' }] }
+    expect(() => workflowDefinitionSchema.parse(custom)).not.toThrow()
   })
 
   it('拒绝缺少 position 的节点', () => {

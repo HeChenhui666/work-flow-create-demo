@@ -1,16 +1,39 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactFlowInstance } from '@xyflow/react'
+import { toast } from 'sonner'
+import { z } from 'zod'
 import { FlowCanvas } from './components/FlowCanvas'
 import { NodePalette } from './components/NodePalette'
 import { BookmarkPanel } from './components/BookmarkPanel'
 import { PropertyInspector } from './components/PropertyInspector'
 import { ExecutionLog } from './components/ExecutionLog'
+import { TemplateModal } from './components/TemplateModal'
+import { Toaster } from './components/ui/sonner'
 import { useJsonIO } from './hooks/useJsonIO'
 import { useMockExecution } from './hooks/useMockExecution'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useViewportStore } from './stores/viewportStore'
 import { useWorkflowStore } from './stores/workflowStore'
 import { useExecutionStore } from './stores/executionStore'
+import { autoLayout } from './utils/autoLayout'
+import { exportCanvasToPng } from './utils/pngExport'
+import { validateWorkflow } from './utils/workflowValidation'
+import type { WorkflowTemplate } from './data/workflowTemplates'
+
+/** 工作流 JSON 导入的 Schema 验证 */
+const workflowImportSchema = z.object({
+  nodes: z.array(z.object({
+    id: z.string(),
+    position: z.object({ x: z.number(), y: z.number() }),
+    type: z.string().optional(),
+    data: z.record(z.unknown()).optional(),
+  }).passthrough()),
+  edges: z.array(z.object({
+    id: z.string(),
+    source: z.string(),
+    target: z.string(),
+  }).passthrough()),
+})
 
 export default function App() {
   const { exportJson, importJson, fileInputRef, handleFileChange } = useJsonIO()
@@ -18,27 +41,57 @@ export default function App() {
   const { addBookmark } = useViewportStore()
   const { validationErrors, nodes, edges, isDirty } = useWorkflowStore()
   const isRunning = useExecutionStore((s) => s.isRunning)
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const hasShownRestoreToast = useRef(false)
 
   useAutoSave({ nodes, edges, isDirty })
 
   useEffect(() => {
+    if (hasShownRestoreToast.current) return
     const saved = localStorage.getItem('workflow-autosave')
     if (!saved) return
     try {
       const { nodes: savedNodes, edges: savedEdges, savedAt } = JSON.parse(saved)
       if (savedNodes?.length > 0) {
+        hasShownRestoreToast.current = true
         const date = new Date(savedAt).toLocaleString()
-        const ok = window.confirm(`发现上次自动保存的工作流（${date}），是否恢复？`)
-        if (ok) {
-          useWorkflowStore.getState().setNodes(savedNodes)
-          useWorkflowStore.getState().setEdges(savedEdges)
-        }
+        toast(
+          <div className="flex flex-col gap-2">
+            <p className="text-sm">发现上次自动保存的工作流（{date}）</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  useWorkflowStore.getState().setNodes(savedNodes)
+                  useWorkflowStore.getState().setEdges(savedEdges)
+                  toast.dismiss()
+                }}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+              >
+                恢复
+              </button>
+              <button
+                onClick={() => toast.dismiss()}
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+              >
+                忽略
+              </button>
+            </div>
+          </div>,
+          { duration: Infinity }
+        )
       }
     } catch (_) {}
   }, [])
 
   const handleRun = useCallback(() => {
-    if (!isRunning) runExecution(nodes, edges)
+    if (isRunning) return
+    const issues = validateWorkflow(nodes, edges)
+    const errors = issues.filter((i) => i.type === 'cycle')
+    if (errors.length > 0) {
+      alert(errors.map((e) => e.message).join('\n'))
+      return
+    }
+    runExecution(nodes, edges)
   }, [isRunning, runExecution, nodes, edges])
 
   const handleStop = useCallback(() => {
@@ -72,6 +125,67 @@ export default function App() {
     },
     [],
   )
+
+  const handleAutoLayout = useCallback(() => {
+    useWorkflowStore.getState().commit()
+    const layoutedNodes = autoLayout(nodes, edges)
+    useWorkflowStore.getState().setNodes(layoutedNodes)
+  }, [nodes, edges])
+
+  const handleExportPng = useCallback(async () => {
+    const canvasElement = document.querySelector('[data-testid="flow-canvas"]') as HTMLElement
+    if (!canvasElement) {
+      toast.error('找不到画布元素，无法导出 PNG')
+      return
+    }
+    const success = await exportCanvasToPng(canvasElement)
+    if (success) {
+      toast.success('PNG 导出成功')
+    }
+  }, [])
+
+  const handleLoadTemplate = useCallback((template: WorkflowTemplate) => {
+    useWorkflowStore.getState().commit()
+    useWorkflowStore.getState().setNodes(template.nodes)
+    useWorkflowStore.getState().setEdges(template.edges)
+  }, [])
+
+  // JSON 拖放导入 - 仅在检测到文件时阻止默认行为
+  const handleJsonDragOver = useCallback((event: React.DragEvent) => {
+    // 只有当拖拽的是文件时才处理，否则让事件继续传播到画布
+    if (event.dataTransfer.types.includes('Files')) {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'copy'
+    }
+  }, [])
+
+  const handleJsonDrop = useCallback((event: React.DragEvent) => {
+    const file = event.dataTransfer.files[0]
+    // 只有当有文件且是 JSON 时才处理
+    if (!file || !file.name.endsWith('.json')) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string)
+        const result = workflowImportSchema.safeParse(data)
+        if (!result.success) {
+          toast.error(`JSON 格式错误: ${result.error.issues[0]?.message ?? '未知错误'}`)
+          return
+        }
+        useWorkflowStore.getState().commit()
+        useWorkflowStore.getState().setNodes(result.data.nodes)
+        useWorkflowStore.getState().setEdges(result.data.edges)
+        toast.success('工作流导入成功')
+      } catch {
+        toast.error('JSON 文件解析失败')
+      }
+    }
+    reader.readAsText(file)
+  }, [])
 
   return (
     <div className="flex h-screen w-screen flex-col font-sans">
@@ -113,6 +227,26 @@ export default function App() {
           >
             📌 添加书签
           </button>
+          <div className="mx-2 h-4 w-px bg-gray-300" />
+          <button
+            onClick={handleAutoLayout}
+            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          >
+            🔄 自动布局
+          </button>
+          <button
+            onClick={handleExportPng}
+            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          >
+            📷 导出 PNG
+          </button>
+          <div className="mx-2 h-4 w-px bg-gray-300" />
+          <button
+            onClick={() => setTemplateOpen(true)}
+            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          >
+            📋 模板
+          </button>
         </div>
       </header>
 
@@ -138,7 +272,11 @@ export default function App() {
         </aside>
 
         {/* 核心画布 */}
-        <main className="flex-1 bg-gray-100">
+        <main
+          className="flex-1 bg-gray-100"
+          onDragOver={handleJsonDragOver}
+          onDrop={handleJsonDrop}
+        >
           <FlowCanvas onInstanceReady={handleInstanceReady} />
         </main>
 
@@ -162,6 +300,16 @@ export default function App() {
 
       {/* 执行日志面板 */}
       <ExecutionLog />
+
+      {/* 模板选择弹窗 */}
+      <TemplateModal
+        open={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        onSelect={handleLoadTemplate}
+      />
+
+      {/* Toast 通知容器 */}
+      <Toaster position="top-right" richColors closeButton />
     </div>
   )
 }
