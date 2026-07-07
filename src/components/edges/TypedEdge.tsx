@@ -38,7 +38,7 @@ export function TypedEdge({
   }
 
   const sourceStatus = useExecutionStore((s) => s.nodeStatuses[source] ?? 'idle')
-  const isAnimating = sourceStatus === 'running' || sourceStatus === 'success'
+  const isAnimating = sourceStatus === 'running'
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
