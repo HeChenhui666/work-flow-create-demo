@@ -23,10 +23,7 @@ const stopAllPointerEvents = (event: React.SyntheticEvent) => {
 /**
  * useIMEAwareInput - 支持中文输入法（IME）的受控输入 Hook
  */
-function useIMEAwareInput(
-  externalValue: string,
-  onExternalChange: (value: string) => void,
-) {
+function useIMEAwareInput(externalValue: string, onExternalChange: (value: string) => void) {
   const [localValue, setLocalValue] = useState(externalValue)
   const isComposingRef = useRef(false)
 

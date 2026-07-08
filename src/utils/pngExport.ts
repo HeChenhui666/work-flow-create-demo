@@ -1,6 +1,9 @@
 import { toPng } from 'html-to-image'
 
-export async function exportCanvasToPng(element: HTMLElement, fileName = 'workflow.png'): Promise<boolean> {
+export async function exportCanvasToPng(
+  element: HTMLElement,
+  fileName = 'workflow.png',
+): Promise<boolean> {
   try {
     const dataUrl = await toPng(element, {
       backgroundColor: '#f9fafb',

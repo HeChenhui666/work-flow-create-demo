@@ -47,8 +47,12 @@ export function PropertyInspector() {
           <span className="text-sm font-medium text-gray-900">{displayLabel}</span>
         </div>
         <div className="space-y-1 text-xs text-gray-500">
-          <div>ID: <span className="font-mono text-gray-700">{selectedNode.id}</span></div>
-          <div>位置: ({Math.round(selectedNode.position.x)}, {Math.round(selectedNode.position.y)})</div>
+          <div>
+            ID: <span className="font-mono text-gray-700">{selectedNode.id}</span>
+          </div>
+          <div>
+            位置: ({Math.round(selectedNode.position.x)}, {Math.round(selectedNode.position.y)})
+          </div>
         </div>
       </div>
 
@@ -58,13 +62,18 @@ export function PropertyInspector() {
           <h4 className="mb-2 text-xs font-semibold text-gray-600">输入端口</h4>
           <div className="space-y-1">
             {inputs.map((input) => (
-              <div key={input.name} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100">
+              <div
+                key={input.name}
+                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100"
+              >
                 <div
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: PORT_COLORS[input.type as keyof typeof PORT_COLORS] }}
                 />
                 <span className="text-xs text-gray-700">
-                  {input.label || PORT_TYPE_LABELS[input.type as keyof typeof PORT_TYPE_LABELS] || input.name}
+                  {input.label ||
+                    PORT_TYPE_LABELS[input.type as keyof typeof PORT_TYPE_LABELS] ||
+                    input.name}
                 </span>
                 <span className="ml-auto text-[10px] text-gray-400">{input.type}</span>
               </div>
@@ -79,13 +88,18 @@ export function PropertyInspector() {
           <h4 className="mb-2 text-xs font-semibold text-gray-600">输出端口</h4>
           <div className="space-y-1">
             {outputs.map((output) => (
-              <div key={output.name} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100">
+              <div
+                key={output.name}
+                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100"
+              >
                 <div
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: PORT_COLORS[output.type as keyof typeof PORT_COLORS] }}
                 />
                 <span className="text-xs text-gray-700">
-                  {output.label || PORT_TYPE_LABELS[output.type as keyof typeof PORT_TYPE_LABELS] || output.name}
+                  {output.label ||
+                    PORT_TYPE_LABELS[output.type as keyof typeof PORT_TYPE_LABELS] ||
+                    output.name}
                 </span>
                 <span className="ml-auto text-[10px] text-gray-400">{output.type}</span>
               </div>
@@ -102,7 +116,10 @@ export function PropertyInspector() {
             {Object.entries(config).map(([key, value]) => (
               <div key={key} className="flex items-start justify-between text-xs">
                 <span className="text-gray-500">{key}:</span>
-                <span className="max-w-[120px] truncate text-right font-mono text-gray-700" title={String(value)}>
+                <span
+                  className="max-w-[120px] truncate text-right font-mono text-gray-700"
+                  title={String(value)}
+                >
                   {String(value)}
                 </span>
               </div>

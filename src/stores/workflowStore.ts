@@ -46,41 +46,44 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   selectedNodeId: null,
   _history: { past: [], future: [] },
 
-  commit: () => set((s) => {
-    const snapshot: HistoryEntry = { nodes: s.nodes, edges: s.edges }
-    const past = [...s._history.past, snapshot].slice(-50)
-    return { _history: { past, future: [] } }
-  }),
+  commit: () =>
+    set((s) => {
+      const snapshot: HistoryEntry = { nodes: s.nodes, edges: s.edges }
+      const past = [...s._history.past, snapshot].slice(-50)
+      return { _history: { past, future: [] } }
+    }),
 
-  undo: () => set((s) => {
-    const { past, future } = s._history
-    if (past.length === 0) return {}
-    const prev = past[past.length - 1]
-    return {
-      nodes: prev.nodes,
-      edges: prev.edges,
-      isDirty: true,
-      _history: {
-        past: past.slice(0, -1),
-        future: [{ nodes: s.nodes, edges: s.edges }, ...future],
-      },
-    }
-  }),
+  undo: () =>
+    set((s) => {
+      const { past, future } = s._history
+      if (past.length === 0) return {}
+      const prev = past[past.length - 1]
+      return {
+        nodes: prev.nodes,
+        edges: prev.edges,
+        isDirty: true,
+        _history: {
+          past: past.slice(0, -1),
+          future: [{ nodes: s.nodes, edges: s.edges }, ...future],
+        },
+      }
+    }),
 
-  redo: () => set((s) => {
-    const { past, future } = s._history
-    if (future.length === 0) return {}
-    const next = future[0]
-    return {
-      nodes: next.nodes,
-      edges: next.edges,
-      isDirty: true,
-      _history: {
-        past: [...past, { nodes: s.nodes, edges: s.edges }],
-        future: future.slice(1),
-      },
-    }
-  }),
+  redo: () =>
+    set((s) => {
+      const { past, future } = s._history
+      if (future.length === 0) return {}
+      const next = future[0]
+      return {
+        nodes: next.nodes,
+        edges: next.edges,
+        isDirty: true,
+        _history: {
+          past: [...past, { nodes: s.nodes, edges: s.edges }],
+          future: future.slice(1),
+        },
+      }
+    }),
 
   setName: (name) => set((s) => ({ meta: { ...s.meta, name }, isDirty: true })),
   setDirty: (isDirty) => set({ isDirty }),
@@ -115,17 +118,13 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
   updateNodeData: (nodeId, data) =>
     set((s) => ({
-      nodes: s.nodes.map((n) =>
-        n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n,
-      ),
+      nodes: s.nodes.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n)),
       isDirty: true,
     })),
 
   updateNodeDataSilent: (nodeId, data) =>
     set((s) => ({
-      nodes: s.nodes.map((n) =>
-        n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n,
-      ),
+      nodes: s.nodes.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n)),
     })),
 
   setSelectedNodeId: (selectedNodeId) => set({ selectedNodeId }),

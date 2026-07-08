@@ -8,7 +8,9 @@ import { BookmarkPanel } from './components/BookmarkPanel'
 import { PropertyInspector } from './components/PropertyInspector'
 import { ExecutionLog } from './components/ExecutionLog'
 import { TemplateModal } from './components/TemplateModal'
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal'
 import { Toaster } from './components/ui/sonner'
+import { ThemeToggle } from './components/ui/theme-toggle'
 import { useJsonIO } from './hooks/useJsonIO'
 import { useMockExecution } from './hooks/useMockExecution'
 import { useAutoSave } from './hooks/useAutoSave'
@@ -19,20 +21,29 @@ import { autoLayout } from './utils/autoLayout'
 import { exportCanvasToPng } from './utils/pngExport'
 import { validateWorkflow } from './utils/workflowValidation'
 import type { WorkflowTemplate } from './data/workflowTemplates'
+import { WORKFLOW_TEMPLATES } from './data/workflowTemplates'
 
 /** 工作流 JSON 导入的 Schema 验证 */
 const workflowImportSchema = z.object({
-  nodes: z.array(z.object({
-    id: z.string(),
-    position: z.object({ x: z.number(), y: z.number() }),
-    type: z.string().optional(),
-    data: z.record(z.unknown()).optional(),
-  }).passthrough()),
-  edges: z.array(z.object({
-    id: z.string(),
-    source: z.string(),
-    target: z.string(),
-  }).passthrough()),
+  nodes: z.array(
+    z
+      .object({
+        id: z.string(),
+        position: z.object({ x: z.number(), y: z.number() }),
+        type: z.string().optional(),
+        data: z.record(z.unknown()).optional(),
+      })
+      .passthrough(),
+  ),
+  edges: z.array(
+    z
+      .object({
+        id: z.string(),
+        source: z.string(),
+        target: z.string(),
+      })
+      .passthrough(),
+  ),
 })
 
 export default function App() {
@@ -42,9 +53,47 @@ export default function App() {
   const { validationErrors, nodes, edges, isDirty } = useWorkflowStore()
   const isRunning = useExecutionStore((s) => s.isRunning)
   const [templateOpen, setTemplateOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const hasShownRestoreToast = useRef(false)
 
   useAutoSave({ nodes, edges, isDirty })
+
+  // 首次加载时，如果没有自动保存数据，则加载默认示例工作流
+  useEffect(() => {
+    const saved = localStorage.getItem('workflow-autosave')
+    if (saved) return
+
+    const currentNodes = useWorkflowStore.getState().nodes
+    if (currentNodes.length > 0) return
+
+    const defaultTemplate = WORKFLOW_TEMPLATES[0]
+    if (defaultTemplate) {
+      useWorkflowStore.getState().setNodes(defaultTemplate.nodes)
+      useWorkflowStore.getState().setEdges(defaultTemplate.edges)
+    }
+  }, [])
+
+  // 监听 ? 键打开快捷键面板
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT'
+      ) {
+        return
+      }
+
+      if (event.key === '?' || (event.shiftKey && event.key === '/')) {
+        event.preventDefault()
+        setShortcutsOpen((prev) => !prev)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   useEffect(() => {
     if (hasShownRestoreToast.current) return
@@ -77,10 +126,12 @@ export default function App() {
               </button>
             </div>
           </div>,
-          { duration: Infinity }
+          { duration: Infinity },
         )
       }
-    } catch (_) {}
+    } catch {
+      // ignore parse errors
+    }
   }, [])
 
   const handleRun = useCallback(() => {
@@ -113,18 +164,12 @@ export default function App() {
     addBookmark('新书签', viewport.x, viewport.y, viewport.zoom)
   }, [addBookmark])
 
-  const handleJumpToBookmark = useCallback(
-    (bookmark: { x: number; y: number; zoom: number }) => {
-      const instance = reactFlowInstanceRef.current
-      if (!instance) return
+  const handleJumpToBookmark = useCallback((bookmark: { x: number; y: number; zoom: number }) => {
+    const instance = reactFlowInstanceRef.current
+    if (!instance) return
 
-      instance.setViewport(
-        { x: bookmark.x, y: bookmark.y, zoom: bookmark.zoom },
-        { duration: 300 },
-      )
-    },
-    [],
-  )
+    instance.setViewport({ x: bookmark.x, y: bookmark.y, zoom: bookmark.zoom }, { duration: 300 })
+  }, [])
 
   const handleAutoLayout = useCallback(() => {
     useWorkflowStore.getState().commit()
@@ -190,22 +235,22 @@ export default function App() {
   return (
     <div className="flex h-screen w-screen flex-col font-sans">
       {/* 顶部工具栏 */}
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
-        <h1 className="text-sm font-bold text-gray-900">FlowCanvas - AI 生图工作流编辑器</h1>
+      <header className="flex items-center justify-between border-b border-border bg-background px-4 py-2">
+        <h1 className="text-sm font-bold text-foreground">FlowCanvas - AI 生图工作流编辑器</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={importJson}
-            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded border border-border bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-accent"
           >
             导入 JSON
           </button>
           <button
             onClick={exportJson}
-            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded border border-border bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-accent"
           >
             导出 JSON
           </button>
-          <div className="mx-2 h-4 w-px bg-gray-300" />
+          <div className="mx-2 h-4 w-px bg-border" />
           <button
             onClick={handleRun}
             disabled={isRunning}
@@ -220,43 +265,45 @@ export default function App() {
           >
             ■ 停止
           </button>
-          <div className="mx-2 h-4 w-px bg-gray-300" />
+          <div className="mx-2 h-4 w-px bg-border" />
           <button
             onClick={handleAddBookmark}
-            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded border border-border bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-accent"
           >
             📌 添加书签
           </button>
-          <div className="mx-2 h-4 w-px bg-gray-300" />
+          <div className="mx-2 h-4 w-px bg-border" />
           <button
             onClick={handleAutoLayout}
-            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded border border-border bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-accent"
           >
             🔄 自动布局
           </button>
           <button
             onClick={handleExportPng}
-            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded border border-border bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-accent"
           >
             📷 导出 PNG
           </button>
-          <div className="mx-2 h-4 w-px bg-gray-300" />
+          <div className="mx-2 h-4 w-px bg-border" />
           <button
             onClick={() => setTemplateOpen(true)}
-            className="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded border border-border bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-accent"
           >
             📋 模板
           </button>
+          <div className="mx-2 h-4 w-px bg-border" />
+          <ThemeToggle />
         </div>
       </header>
 
       {/* 验证错误提示 */}
       {validationErrors.length > 0 && (
-        <div className="border-b border-red-200 bg-red-50 px-4 py-2">
-          <p className="text-xs font-medium text-red-700">
+        <div className="border-b border-red-200 bg-red-50 px-4 py-2 dark:border-red-900 dark:bg-red-950">
+          <p className="text-xs font-medium text-red-700 dark:text-red-300">
             ⚠️ {validationErrors.length} 个验证错误:
           </p>
-          <ul className="mt-1 list-inside list-disc text-xs text-red-600">
+          <ul className="mt-1 list-inside list-disc text-xs text-red-600 dark:text-red-400">
             {validationErrors.map((error, index) => (
               <li key={index}>{error}</li>
             ))}
@@ -267,13 +314,13 @@ export default function App() {
       {/* 主体区域 */}
       <div className="flex flex-1 overflow-hidden">
         {/* 左侧面板 - NodePalette */}
-        <aside className="w-60 border-r border-gray-200 bg-gray-50">
+        <aside className="w-60 border-r border-border bg-muted">
           <NodePalette />
         </aside>
 
         {/* 核心画布 */}
         <main
-          className="flex-1 bg-gray-100"
+          className="flex-1 bg-background"
           onDragOver={handleJsonDragOver}
           onDrop={handleJsonDrop}
         >
@@ -281,7 +328,7 @@ export default function App() {
         </main>
 
         {/* 右侧面板 - 属性检查器 + 书签 */}
-        <aside className="flex w-72 flex-col border-l border-gray-200 bg-gray-50">
+        <aside className="flex w-72 flex-col border-l border-border bg-muted">
           <div className="flex-1 overflow-hidden">
             <PropertyInspector />
           </div>
@@ -307,6 +354,9 @@ export default function App() {
         onClose={() => setTemplateOpen(false)}
         onSelect={handleLoadTemplate}
       />
+
+      {/* 快捷键面板 */}
+      <KeyboardShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
       {/* Toast 通知容器 */}
       <Toaster position="top-right" richColors closeButton />

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { LoadCheckpointNode, CLIPEncodeNode, EmptyLatentNode, KSamplerNode, VAEDecodeNode } from '../WorkflowNodes'
+import {
+  LoadCheckpointNode,
+  CLIPEncodeNode,
+  EmptyLatentNode,
+  KSamplerNode,
+  VAEDecodeNode,
+} from '../WorkflowNodes'
 
 describe('WorkflowNodes', () => {
   it('LoadCheckpointNode 应被正确导出', () => {

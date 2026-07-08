@@ -28,12 +28,14 @@ const alignBottom: AlignFn = (nodes) => {
 }
 
 const alignHCenter: AlignFn = (nodes) => {
-  const midX = (Math.min(...nodes.map((n) => n.position.x)) + Math.max(...nodes.map((n) => n.position.x))) / 2
+  const midX =
+    (Math.min(...nodes.map((n) => n.position.x)) + Math.max(...nodes.map((n) => n.position.x))) / 2
   return nodes.map((n) => ({ ...n, position: { ...n.position, x: midX } }))
 }
 
 const alignVCenter: AlignFn = (nodes) => {
-  const midY = (Math.min(...nodes.map((n) => n.position.y)) + Math.max(...nodes.map((n) => n.position.y))) / 2
+  const midY =
+    (Math.min(...nodes.map((n) => n.position.y)) + Math.max(...nodes.map((n) => n.position.y))) / 2
   return nodes.map((n) => ({ ...n, position: { ...n.position, y: midY } }))
 }
 

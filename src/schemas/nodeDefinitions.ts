@@ -22,7 +22,7 @@ export const NODE_TYPES = [
   'VAEDecode',
 ] as const
 
-export type NodeType = typeof NODE_TYPES[number]
+export type NodeType = (typeof NODE_TYPES)[number]
 
 /** 节点类型中文名称映射 */
 export const NODE_TYPE_LABELS: Record<NodeType, string> = {
@@ -48,22 +48,22 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDef> = {
     inputs: [],
     outputs: [
       { name: 'MODEL', type: 'MODEL', label: '模型' },
-      { name: 'CLIP',  type: 'CLIP', label: 'CLIP'  },
-      { name: 'VAE',   type: 'VAE', label: 'VAE'   },
+      { name: 'CLIP', type: 'CLIP', label: 'CLIP' },
+      { name: 'VAE', type: 'VAE', label: 'VAE' },
     ],
     defaultConfig: { modelName: '' },
     color: '#a855f7',
     label: '加载模型',
   },
   CLIPEncode: {
-    inputs:  [{ name: 'CLIP', type: 'CLIP', label: 'CLIP' }],
+    inputs: [{ name: 'CLIP', type: 'CLIP', label: 'CLIP' }],
     outputs: [{ name: 'CONDITIONING', type: 'CONDITIONING', label: '条件' }],
     defaultConfig: { positivePrompt: '', negativePrompt: '' },
     color: '#22c55e',
     label: '文本编码',
   },
   EmptyLatent: {
-    inputs:  [],
+    inputs: [],
     outputs: [{ name: 'LATENT', type: 'LATENT', label: '潜空间' }],
     defaultConfig: { width: 512, height: 512, batchSize: 1 },
     color: '#6b7280',
@@ -71,9 +71,9 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDef> = {
   },
   KSampler: {
     inputs: [
-      { name: 'MODEL',        type: 'MODEL', label: '模型'        },
+      { name: 'MODEL', type: 'MODEL', label: '模型' },
       { name: 'CONDITIONING', type: 'CONDITIONING', label: '条件' },
-      { name: 'LATENT',       type: 'LATENT', label: '潜空间'       },
+      { name: 'LATENT', type: 'LATENT', label: '潜空间' },
     ],
     outputs: [{ name: 'LATENT', type: 'LATENT', label: '潜空间' }],
     defaultConfig: { steps: 20, cfg: 7, sampler: 'euler', scheduler: 'karras', seed: 42 },
@@ -83,7 +83,7 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDef> = {
   VAEDecode: {
     inputs: [
       { name: 'LATENT', type: 'LATENT', label: '潜空间' },
-      { name: 'VAE',    type: 'VAE', label: 'VAE'    },
+      { name: 'VAE', type: 'VAE', label: 'VAE' },
     ],
     outputs: [{ name: 'IMAGE', type: 'IMAGE', label: '图像' }],
     defaultConfig: {},

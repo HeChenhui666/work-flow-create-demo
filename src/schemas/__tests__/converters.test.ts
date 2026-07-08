@@ -7,11 +7,9 @@ const sampleDef: WorkflowDefinition = {
   name: 'Sample',
   nodes: [
     { id: 'n1', type: 'LoadCheckpoint', position: { x: 0, y: 0 }, config: { modelName: 'v1.5' } },
-    { id: 'n2', type: 'VAEDecode',      position: { x: 400, y: 0 }, config: {} },
+    { id: 'n2', type: 'VAEDecode', position: { x: 400, y: 0 }, config: {} },
   ],
-  edges: [
-    { id: 'e1', source: 'n1', sourceHandle: 'VAE', target: 'n2', targetHandle: 'VAE' },
-  ],
+  edges: [{ id: 'e1', source: 'n1', sourceHandle: 'VAE', target: 'n2', targetHandle: 'VAE' }],
   metadata: { version: 1, updatedAt: '2026-07-03T00:00:00Z' },
 }
 

@@ -60,16 +60,25 @@
 
 /* 节点执行中高亮脉冲动画 */
 @keyframes pulse-border {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5), 0 0 12px rgba(59, 130, 246, 0.3);
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px rgba(59, 130, 246, 0.5),
+      0 0 12px rgba(59, 130, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.5);
+    box-shadow:
+      0 0 0 5px rgba(59, 130, 246, 0.3),
+      0 0 20px rgba(59, 130, 246, 0.5);
   }
 }
 
 /* 执行时连线流动动画 */
 @keyframes flowDash {
-  from { stroke-dashoffset: 24; }
-  to   { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }

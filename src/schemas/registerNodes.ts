@@ -20,8 +20,14 @@ nodeRegistry.register({
   label: 'LoRA Loader',
   color: '#8b5cf6',
   category: 'model',
-  inputs: [{ name: 'MODEL', type: 'MODEL' }, { name: 'CLIP', type: 'CLIP' }],
-  outputs: [{ name: 'MODEL', type: 'MODEL' }, { name: 'CLIP', type: 'CLIP' }],
+  inputs: [
+    { name: 'MODEL', type: 'MODEL' },
+    { name: 'CLIP', type: 'CLIP' },
+  ],
+  outputs: [
+    { name: 'MODEL', type: 'MODEL' },
+    { name: 'CLIP', type: 'CLIP' },
+  ],
   defaultConfig: { loraName: 'example.safetensors', strength: 1.0 },
 })
 
@@ -57,11 +63,17 @@ nodeRegistry.register({
 
 function getCategoryForType(type: string): string {
   switch (type) {
-    case 'LoadCheckpoint': return 'model'
-    case 'CLIPEncode':     return 'encode'
-    case 'KSampler':       return 'sampler'
-    case 'VAEDecode':      return 'decode'
-    case 'EmptyLatent':    return 'tool'
-    default:               return 'general'
+    case 'LoadCheckpoint':
+      return 'model'
+    case 'CLIPEncode':
+      return 'encode'
+    case 'KSampler':
+      return 'sampler'
+    case 'VAEDecode':
+      return 'decode'
+    case 'EmptyLatent':
+      return 'tool'
+    default:
+      return 'general'
   }
 }

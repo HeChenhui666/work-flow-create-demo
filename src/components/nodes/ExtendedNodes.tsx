@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { NodeStatusBadge } from './WorkflowNodes'
 import { useWorkflowStore } from '../../stores/workflowStore'
@@ -6,7 +6,10 @@ import { useWorkflowStore } from '../../stores/workflowStore'
 export function LoRALoaderNode({ id, data }: NodeProps) {
   const nodeData = data as Record<string, unknown>
   const { updateNodeData } = useWorkflowStore()
-  const config = (nodeData.config as Record<string, unknown>) ?? {}
+  const config = useMemo(
+    () => (nodeData.config as Record<string, unknown>) ?? {},
+    [nodeData.config],
+  )
 
   const handleConfigChange = useCallback(
     (key: string, value: unknown) => {
@@ -16,9 +19,15 @@ export function LoRALoaderNode({ id, data }: NodeProps) {
   )
 
   return (
-    <div className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm" style={{ borderColor: '#8b5cf6' }}>
+    <div
+      className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm"
+      style={{ borderColor: '#8b5cf6' }}
+    >
       <NodeStatusBadge nodeId={id} />
-      <div className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate" style={{ backgroundColor: '#8b5cf6' }}>
+      <div
+        className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate"
+        style={{ backgroundColor: '#8b5cf6' }}
+      >
         LoRA Loader
       </div>
       <Handle type="target" position={Position.Left} id="MODEL" style={{ top: '38%' }} />
@@ -65,7 +74,8 @@ export function ImageLoadNode({ id, data }: NodeProps) {
   const { updateNodeData } = useWorkflowStore()
   const [isDragOver, setIsDragOver] = useState(false)
 
-  const imagePreview = (nodeData.config as Record<string, unknown>)?.imagePreview as string | undefined
+  const imagePreview = (nodeData.config as Record<string, unknown>)?.imagePreview as
+    string | undefined
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -82,29 +92,30 @@ export function ImageLoadNode({ id, data }: NodeProps) {
     setIsDragOver(false)
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(false)
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setIsDragOver(false)
 
-    const file = Array.from(e.dataTransfer.files).find((f) =>
-      f.type.startsWith('image/'),
-    )
-    if (!file) return
+      const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
+      if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string
-      updateNodeData(id, {
-        config: {
-          ...((nodeData.config as Record<string, unknown>) ?? {}),
-          imagePath: file.name,
-          imagePreview: dataUrl,
-        },
-      })
-    }
-    reader.readAsDataURL(file)
-  }, [id, nodeData.config, updateNodeData])
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string
+        updateNodeData(id, {
+          config: {
+            ...((nodeData.config as Record<string, unknown>) ?? {}),
+            imagePath: file.name,
+            imagePreview: dataUrl,
+          },
+        })
+      }
+      reader.readAsDataURL(file)
+    },
+    [id, nodeData.config, updateNodeData],
+  )
 
   const handleClick = useCallback(() => {
     const input = document.createElement('input')
@@ -130,9 +141,15 @@ export function ImageLoadNode({ id, data }: NodeProps) {
   }, [id, nodeData.config, updateNodeData])
 
   return (
-    <div className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm" style={{ borderColor: '#f97316' }}>
+    <div
+      className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm"
+      style={{ borderColor: '#f97316' }}
+    >
       <NodeStatusBadge nodeId={id} />
-      <div className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate" style={{ backgroundColor: '#f97316' }}>
+      <div
+        className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate"
+        style={{ backgroundColor: '#f97316' }}
+      >
         图像加载
       </div>
       <div
@@ -147,11 +164,7 @@ export function ImageLoadNode({ id, data }: NodeProps) {
         onPointerDown={(e) => e.stopPropagation()}
       >
         {imagePreview ? (
-          <img
-            src={imagePreview}
-            alt="loaded"
-            className="w-full h-20 object-cover rounded"
-          />
+          <img src={imagePreview} alt="loaded" className="w-full h-20 object-cover rounded" />
         ) : (
           <div className="flex flex-col items-center justify-center py-3 px-2">
             <span className="text-gray-300 text-lg">🖼️</span>
@@ -169,13 +182,18 @@ export function ImageLoadNode({ id, data }: NodeProps) {
   )
 }
 
-export function ImagePreviewNode({ id, data }: NodeProps) {
-  const nodeData = data as Record<string, unknown>
+export function ImagePreviewNode({ id }: NodeProps) {
   return (
-    <div className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm" style={{ borderColor: '#f97316' }}>
+    <div
+      className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm"
+      style={{ borderColor: '#f97316' }}
+    >
       <NodeStatusBadge nodeId={id} />
       <Handle type="target" position={Position.Left} id="IMAGE" />
-      <div className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate" style={{ backgroundColor: '#f97316' }}>
+      <div
+        className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate"
+        style={{ backgroundColor: '#f97316' }}
+      >
         图像预览
       </div>
       <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
@@ -189,7 +207,10 @@ export function ImagePreviewNode({ id, data }: NodeProps) {
 export function UpscalerNode({ id, data }: NodeProps) {
   const nodeData = data as Record<string, unknown>
   const { updateNodeData } = useWorkflowStore()
-  const config = (nodeData.config as Record<string, unknown>) ?? {}
+  const config = useMemo(
+    () => (nodeData.config as Record<string, unknown>) ?? {},
+    [nodeData.config],
+  )
 
   const handleConfigChange = useCallback(
     (key: string, value: unknown) => {
@@ -199,10 +220,16 @@ export function UpscalerNode({ id, data }: NodeProps) {
   )
 
   return (
-    <div className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm" style={{ borderColor: '#06b6d4' }}>
+    <div
+      className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm"
+      style={{ borderColor: '#06b6d4' }}
+    >
       <NodeStatusBadge nodeId={id} />
       <Handle type="target" position={Position.Left} id="IMAGE" />
-      <div className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate" style={{ backgroundColor: '#06b6d4' }}>
+      <div
+        className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate"
+        style={{ backgroundColor: '#06b6d4' }}
+      >
         放大器
       </div>
       <div

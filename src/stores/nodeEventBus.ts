@@ -1,16 +1,16 @@
 import { create } from 'zustand'
 
 export interface NodeEventMap {
-  'mount':            { nodeId: string }
-  'unmount':          { nodeId: string }
-  'connect':          { nodeId: string; port: string; fromNodeId: string }
-  'disconnect':       { nodeId: string; port: string }
-  'config-change':    { nodeId: string; key: string; prev: unknown; next: unknown }
-  'before-execute':   { nodeId: string }
+  mount: { nodeId: string }
+  unmount: { nodeId: string }
+  connect: { nodeId: string; port: string; fromNodeId: string }
+  disconnect: { nodeId: string; port: string }
+  'config-change': { nodeId: string; key: string; prev: unknown; next: unknown }
+  'before-execute': { nodeId: string }
   'execute-progress': { nodeId: string; percent: number }
-  'execute-success':  { nodeId: string; duration: number }
-  'execute-error':    { nodeId: string; error: string }
-  'upstream-ready':   { nodeId: string; port: string; fromNodeId: string }
+  'execute-success': { nodeId: string; duration: number }
+  'execute-error': { nodeId: string; error: string }
+  'upstream-ready': { nodeId: string; port: string; fromNodeId: string }
 }
 
 export type NodeEventType = keyof NodeEventMap
@@ -18,7 +18,7 @@ export type NodeEventPayload<T extends NodeEventType> = NodeEventMap[T]
 export type NodeEventHandler<T extends NodeEventType> = (payload: NodeEventPayload<T>) => void
 
 interface EventBusState {
-  listeners: Map<NodeEventType, Set<NodeEventHandler<any>>>
+  listeners: Map<NodeEventType, Set<NodeEventHandler<NodeEventType>>>
   eventLog: Array<{ type: NodeEventType; payload: unknown; timestamp: number }>
   on: <T extends NodeEventType>(type: T, handler: NodeEventHandler<T>) => () => void
   off: <T extends NodeEventType>(type: T, handler: NodeEventHandler<T>) => void
@@ -51,7 +51,11 @@ export const useNodeEventBus = create<EventBusState>((set, get) => ({
     const handlers = listeners.get(type)
     if (handlers) {
       handlers.forEach((handler) => {
-        try { handler(payload) } catch (_) {}
+        try {
+          handler(payload)
+        } catch {
+          // ignore handler errors
+        }
       })
     }
     set({

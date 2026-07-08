@@ -48,7 +48,15 @@ export function useDnD() {
    * @param onNodeAdd - 节点添加回调，由调用方提供（通常连接到 store）
    */
   const onDrop = useCallback(
-    (event: React.DragEvent, onNodeAdd: (node: { id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }) => void) => {
+    (
+      event: React.DragEvent,
+      onNodeAdd: (node: {
+        id: string
+        type: string
+        position: { x: number; y: number }
+        data: Record<string, unknown>
+      }) => void,
+    ) => {
       event.preventDefault()
 
       const nodeType = event.dataTransfer.getData('application/flow-node-type')

@@ -10,7 +10,7 @@ export interface RegistryNodeDef {
   outputs: PortDef[]
   defaultConfig: Record<string, unknown>
   tags?: string[]
-  hooks?: Partial<Record<NodeEventType, NodeEventHandler<any>>>
+  hooks?: Partial<Record<NodeEventType, NodeEventHandler<NodeEventType>>>
   validate?: (config: Record<string, unknown>) => string[]
   version?: string
   deprecated?: boolean

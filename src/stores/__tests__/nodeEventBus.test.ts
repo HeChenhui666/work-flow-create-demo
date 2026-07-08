@@ -30,7 +30,9 @@ describe('nodeEventBus', () => {
   })
 
   it('emit 应追加到 eventLog', () => {
-    useNodeEventBus.getState().emit('config-change', { nodeId: 'n1', key: 'steps', prev: 20, next: 30 })
+    useNodeEventBus
+      .getState()
+      .emit('config-change', { nodeId: 'n1', key: 'steps', prev: 20, next: 30 })
     expect(useNodeEventBus.getState().eventLog).toHaveLength(1)
     expect(useNodeEventBus.getState().eventLog[0].type).toBe('config-change')
   })

@@ -41,15 +41,15 @@ function buildTopoLevels(nodes: Node[], edges: Edge[]): Node[][] {
 
 const NODE_DURATIONS: Record<string, number> = {
   LoadCheckpoint: 1500,
-  CLIPEncode:     400,
-  EmptyLatent:    100,
-  KSampler:       3000,
-  VAEDecode:      600,
-  LoRALoader:     800,
-  ImageLoad:      200,
-  ImagePreview:   100,
-  Upscaler:       2000,
-  default:        500,
+  CLIPEncode: 400,
+  EmptyLatent: 100,
+  KSampler: 3000,
+  VAEDecode: 600,
+  LoRALoader: 800,
+  ImageLoad: 200,
+  ImagePreview: 100,
+  Upscaler: 2000,
+  default: 500,
 }
 
 export function useMockExecution() {
@@ -85,7 +85,7 @@ export function useMockExecution() {
             useNodeEventBus.getState().emit('before-execute', { nodeId: node.id })
 
             if (type === 'KSampler') {
-              const steps = ((node.data?.config as Record<string, number>)?.steps ?? 20)
+              const steps = (node.data?.config as Record<string, number>)?.steps ?? 20
               const stepDelay = duration / steps
               for (let i = 1; i <= steps; i++) {
                 if (signal.aborted) return
@@ -100,13 +100,15 @@ export function useMockExecution() {
 
             if (signal.aborted) return
             useExecutionStore.getState().setNodeStatus(node.id, 'success')
-            const elapsed = ((Date.now() - t0) / 1000)
+            const elapsed = (Date.now() - t0) / 1000
             useExecutionStore.getState().addLog({
               nodeId: node.id,
               message: `${type} ✓ 完成 (${elapsed.toFixed(2)}s)`,
               timestamp: Date.now() - startTime,
             })
-            useNodeEventBus.getState().emit('execute-success', { nodeId: node.id, duration: elapsed })
+            useNodeEventBus
+              .getState()
+              .emit('execute-success', { nodeId: node.id, duration: elapsed })
 
             // 通知下游节点 upstream-ready
             const downstreamEdges = edges.filter((e) => e.source === node.id)

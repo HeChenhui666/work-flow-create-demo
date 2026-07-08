@@ -23,9 +23,20 @@ import { useConnection } from '../hooks/useConnection'
 import { useDnD } from '../hooks/useDnD'
 import { NODE_DEFINITIONS, type NodeType } from '../schemas/nodeDefinitions'
 import { nodeRegistry } from '../schemas/nodeRegistry'
-import { LoadCheckpointNode, CLIPEncodeNode, EmptyLatentNode, KSamplerNode, VAEDecodeNode } from './nodes/WorkflowNodes'
+import {
+  LoadCheckpointNode,
+  CLIPEncodeNode,
+  EmptyLatentNode,
+  KSamplerNode,
+  VAEDecodeNode,
+} from './nodes/WorkflowNodes'
 import { NoteNode } from './nodes/NoteNode'
-import { LoRALoaderNode, ImageLoadNode, ImagePreviewNode, UpscalerNode } from './nodes/ExtendedNodes'
+import {
+  LoRALoaderNode,
+  ImageLoadNode,
+  ImagePreviewNode,
+  UpscalerNode,
+} from './nodes/ExtendedNodes'
 import { TypedEdge } from './edges/TypedEdge'
 import { ContextMenu, type ContextMenuItem } from './ContextMenu'
 import { AlignmentToolbar } from './AlignmentToolbar'
@@ -64,14 +75,17 @@ export interface FlowCanvasHandle {
  * - Minimap 缩略导航
  * - Controls 缩放控制
  */
-export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: ReactFlowInstance) => void }) {
+export function FlowCanvas({
+  onInstanceReady,
+}: {
+  onInstanceReady?: (instance: ReactFlowInstance) => void
+}) {
   const {
     nodes: storeNodes,
     edges: storeEdges,
     addNode,
     removeNode,
     setNodes: setStoreNodes,
-    setEdges: setStoreEdges,
     addEdge: addStoreEdge,
     setSelectedNodeId,
   } = useWorkflowStore()
@@ -100,7 +114,7 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
   }, [storeEdges, setEdges])
 
   const { isValidConnection } = useConnection()
-  const { setReactFlowInstance, onDragStart, onDragOver, onDrop } = useDnD()
+  const { setReactFlowInstance, onDragOver, onDrop } = useDnD()
 
   // 保存 ReactFlow instance 引用供外部调用
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null)
@@ -173,9 +187,7 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
     (changes: Parameters<typeof onEdgesChange>[0]) => {
       onEdgesChange(changes)
       // 将边的移除同步到 store
-      const removedEdgeIds = changes
-        .filter((c) => c.type === 'remove')
-        .map((c) => c.id)
+      const removedEdgeIds = changes.filter((c) => c.type === 'remove').map((c) => c.id)
       if (removedEdgeIds.length > 0) {
         removedEdgeIds.forEach((edgeId) => {
           useWorkflowStore.getState().removeEdge(edgeId)
@@ -196,18 +208,15 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
   )
 
   // 右键菜单处理
-  const handleContextMenu = useCallback(
-    (event: React.MouseEvent, nodeId?: string) => {
-      event.preventDefault()
-      setContextMenu({
-        visible: true,
-        x: event.clientX,
-        y: event.clientY,
-        nodeId,
-      })
-    },
-    [],
-  )
+  const handleContextMenu = useCallback((event: React.MouseEvent, nodeId?: string) => {
+    event.preventDefault()
+    setContextMenu({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      nodeId,
+    })
+  }, [])
 
   const closeContextMenu = useCallback(() => {
     setContextMenu((prev) => ({ ...prev, visible: false }))
@@ -294,7 +303,7 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
         },
       ]
     }
-  }, [contextMenu, nodes, setNodes, addNode, removeNode])
+  }, [contextMenu, nodes, setNodes, addNode, removeNode, setSelectedNodeId])
 
   // 背景样式根据缩放级别动态切换
   const backgroundVariant = BackgroundVariant.Lines
@@ -310,17 +319,24 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
   )
 
   // 对齐操作回调（记录 undo 历史）
-  const handleAlign = useCallback((alignedNodes: Node[]) => {
-    useWorkflowStore.getState().commit()
-    setNodes((nds) => nds.map((n) => {
-      const aligned = alignedNodes.find((a) => a.id === n.id)
-      return aligned ? { ...n, position: aligned.position } : n
-    }))
-    setStoreNodes(storeNodes.map((n) => {
-      const aligned = alignedNodes.find((a) => a.id === n.id)
-      return aligned ? { ...n, position: aligned.position } : n
-    }))
-  }, [setNodes, setStoreNodes, storeNodes])
+  const handleAlign = useCallback(
+    (alignedNodes: Node[]) => {
+      useWorkflowStore.getState().commit()
+      setNodes((nds) =>
+        nds.map((n) => {
+          const aligned = alignedNodes.find((a) => a.id === n.id)
+          return aligned ? { ...n, position: aligned.position } : n
+        }),
+      )
+      setStoreNodes(
+        storeNodes.map((n) => {
+          const aligned = alignedNodes.find((a) => a.id === n.id)
+          return aligned ? { ...n, position: aligned.position } : n
+        }),
+      )
+    },
+    [setNodes, setStoreNodes, storeNodes],
+  )
 
   // 节点删除回调（键盘 Delete/Backspace 或右键菜单触发）
   const handleNodesDelete: OnNodesDelete = useCallback(
@@ -337,27 +353,28 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
   )
 
   // 边删除回调
-  const handleEdgesDelete: OnEdgesDelete = useCallback(
-    (deletedEdges) => {
-      deletedEdges.forEach((edge) => {
-        useWorkflowStore.getState().removeEdge(edge.id)
-      })
-    },
-    [],
-  )
+  const handleEdgesDelete: OnEdgesDelete = useCallback((deletedEdges) => {
+    deletedEdges.forEach((edge) => {
+      useWorkflowStore.getState().removeEdge(edge.id)
+    })
+  }, [])
 
   // 键盘快捷键：Delete/Backspace 删除选中节点
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // 如果焦点在输入框内，不触发删除
       const target = event.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT'
+      ) {
         return
       }
 
       if ((event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey) {
         event.preventDefault()
-        const { nodes: undoneNodes, edges: undoneEdges } = useWorkflowStore.getState()
+        const { nodes: undoneNodes } = useWorkflowStore.getState()
         useWorkflowStore.getState().undo()
         const { nodes: restoredNodes, edges: restoredEdges } = useWorkflowStore.getState()
         if (restoredNodes !== undoneNodes) {
@@ -369,7 +386,7 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
 
       if ((event.metaKey || event.ctrlKey) && event.key === 'z' && event.shiftKey) {
         event.preventDefault()
-        const { nodes: beforeNodes, edges: beforeEdges } = useWorkflowStore.getState()
+        const { nodes: beforeNodes } = useWorkflowStore.getState()
         useWorkflowStore.getState().redo()
         const { nodes: afterNodes, edges: afterEdges } = useWorkflowStore.getState()
         if (afterNodes !== beforeNodes) {
@@ -393,7 +410,7 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [removeNode, setSelectedNodeId, setNodes])
+  }, [removeNode, setSelectedNodeId, setNodes, setEdges])
 
   // 初始化回调：保存 instance 并通知父组件
   const handleInit = useCallback(
@@ -437,12 +454,7 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
         onlyRenderVisibleElements
         className="bg-gray-50"
       >
-        <Background
-          variant={backgroundVariant}
-          gap={16}
-          size={1}
-          color="#e5e7eb"
-        />
+        <Background variant={backgroundVariant} gap={16} size={1} color="#e5e7eb" />
         <MiniMap
           nodeColor={(node) => {
             const nodeType = node.type as NodeType | undefined
@@ -456,10 +468,7 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
           maskColor="rgba(0, 0, 0, 0.1)"
           className="rounded-lg border border-gray-200 shadow-sm"
         />
-        <Controls
-          showInteractive={false}
-          className="rounded-lg border border-gray-200 shadow-sm"
-        />
+        <Controls showInteractive={false} className="rounded-lg border border-gray-200 shadow-sm" />
       </ReactFlow>
 
       <AlignmentToolbar selectedNodes={selectedNodes} onAlign={handleAlign} />

@@ -10,7 +10,8 @@ import { workflowDefinitionSchema } from '../schemas/workflow'
  * 导入：读取 JSON 文件，校验后加载到画布
  */
 export function useJsonIO() {
-  const { nodes, edges, meta, setNodes, setEdges, setName, setValidationErrors } = useWorkflowStore()
+  const { nodes, edges, meta, setNodes, setEdges, setName, setValidationErrors } =
+    useWorkflowStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const exportJson = useCallback(() => {

@@ -8,7 +8,9 @@ export function ExecutionLog() {
 
   function formatTime(ms: number) {
     const s = Math.floor(ms / 1000)
-    const frac = String(ms % 1000).padStart(3, '0').slice(0, 2)
+    const frac = String(ms % 1000)
+      .padStart(3, '0')
+      .slice(0, 2)
     return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}.${frac}`
   }
 
@@ -18,11 +20,11 @@ export function ExecutionLog() {
         className="flex w-full items-center gap-2 px-4 py-1.5 hover:bg-gray-800 transition-colors"
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-blue-400 animate-pulse' : 'bg-gray-500'}`} />
+        <span
+          className={`w-2 h-2 rounded-full ${isRunning ? 'bg-blue-400 animate-pulse' : 'bg-gray-500'}`}
+        />
         <span>执行日志</span>
-        {logs.length > 0 && (
-          <span className="text-gray-500 text-[10px]">({logs.length} 条)</span>
-        )}
+        {logs.length > 0 && <span className="text-gray-500 text-[10px]">({logs.length} 条)</span>}
         <span className="ml-auto text-gray-500">{open ? '▼' : '▲'}</span>
       </button>
 

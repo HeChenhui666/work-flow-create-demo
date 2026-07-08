@@ -83,7 +83,11 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationIssue[
   }
   for (const node of nodes) {
     if (!connected.has(node.id)) {
-      issues.push({ type: 'isolated', message: `节点 ${node.type ?? node.id} 未连接到任何边`, nodeId: node.id })
+      issues.push({
+        type: 'isolated',
+        message: `节点 ${node.type ?? node.id} 未连接到任何边`,
+        nodeId: node.id,
+      })
     }
   }
 

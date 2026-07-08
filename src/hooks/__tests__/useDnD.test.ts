@@ -19,10 +19,7 @@ describe('useDnD', () => {
       result.current.onDragStart('LoadCheckpoint')(event)
     })
 
-    expect(setDataMock).toHaveBeenCalledWith(
-      'application/flow-node-type',
-      'LoadCheckpoint',
-    )
+    expect(setDataMock).toHaveBeenCalledWith('application/flow-node-type', 'LoadCheckpoint')
     expect(event.dataTransfer.effectAllowed).toBe('move')
   })
 

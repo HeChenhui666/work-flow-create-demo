@@ -3,7 +3,11 @@ import { validateWorkflow } from '../workflowValidation'
 import type { Node, Edge } from '@xyflow/react'
 
 const makeNode = (id: string): Node => ({ id, position: { x: 0, y: 0 }, data: {}, type: 'default' })
-const makeEdge = (source: string, target: string): Edge => ({ id: `${source}-${target}`, source, target })
+const makeEdge = (source: string, target: string): Edge => ({
+  id: `${source}-${target}`,
+  source,
+  target,
+})
 
 describe('validateWorkflow', () => {
   it('空画布无错误', () => {

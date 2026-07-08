@@ -20,6 +20,5 @@ export const useViewportStore = create<ViewportState>((set) => ({
     set((s) => ({
       bookmarks: [...s.bookmarks, { id: crypto.randomUUID(), label, x, y, zoom }],
     })),
-  removeBookmark: (id) =>
-    set((s) => ({ bookmarks: s.bookmarks.filter((b) => b.id !== id) })),
+  removeBookmark: (id) => set((s) => ({ bookmarks: s.bookmarks.filter((b) => b.id !== id) })),
 }))

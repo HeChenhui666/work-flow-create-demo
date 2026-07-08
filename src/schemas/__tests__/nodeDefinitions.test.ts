@@ -4,15 +4,15 @@ import { PORT_TYPES } from '../portRegistry'
 
 describe('nodeDefinitions', () => {
   it('每个节点类型都有定义', () => {
-    NODE_TYPES.forEach(type => {
+    NODE_TYPES.forEach((type) => {
       expect(NODE_DEFINITIONS[type]).toBeDefined()
     })
   })
 
   it('所有端口 type 都是合法的 PortType', () => {
-    NODE_TYPES.forEach(nodeType => {
+    NODE_TYPES.forEach((nodeType) => {
       const def = NODE_DEFINITIONS[nodeType]
-      ;[...def.inputs, ...def.outputs].forEach(port => {
+      ;[...def.inputs, ...def.outputs].forEach((port) => {
         expect(PORT_TYPES).toContain(port.type)
       })
     })
@@ -31,7 +31,7 @@ describe('nodeDefinitions', () => {
   })
 
   it('每个节点 color 都是合法的 hex 颜色', () => {
-    NODE_TYPES.forEach(type => {
+    NODE_TYPES.forEach((type) => {
       expect(NODE_DEFINITIONS[type].color).toMatch(/^#[0-9a-f]{6}$/i)
     })
   })

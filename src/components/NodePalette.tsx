@@ -4,11 +4,11 @@ import { nodeRegistry, type RegistryNodeDef } from '../schemas/nodeRegistry'
 import { NODE_DEFINITIONS, NODE_TYPES } from '../schemas/nodeDefinitions'
 
 const CATEGORY_LABELS: Record<string, string> = {
-  model:   '📦 模型加载',
-  encode:  '📝 编码',
+  model: '📦 模型加载',
+  encode: '📝 编码',
   sampler: '🎲 采样',
-  decode:  '🖼️ 解码',
-  tool:    '🔧 工具',
+  decode: '🖼️ 解码',
+  tool: '🔧 工具',
   general: '📌 通用',
 }
 
@@ -47,7 +47,10 @@ export function NodePalette() {
   const filtered = useMemo(() => {
     const query = search.toLowerCase()
     return query
-      ? allDefs.filter((def) => def.label.toLowerCase().includes(query) || def.type.toLowerCase().includes(query))
+      ? allDefs.filter(
+          (def) =>
+            def.label.toLowerCase().includes(query) || def.type.toLowerCase().includes(query),
+        )
       : allDefs
   }, [allDefs, search])
 
@@ -85,7 +88,7 @@ export function NodePalette() {
                 key={def.type}
                 data-testid={`palette-node-${def.type}`}
                 draggable
-                onDragStart={onDragStart(def.type as any)}
+                onDragStart={onDragStart(def.type)}
                 className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab hover:bg-gray-50 active:cursor-grabbing transition-colors"
               >
                 <span

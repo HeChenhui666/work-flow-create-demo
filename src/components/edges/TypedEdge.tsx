@@ -17,7 +17,6 @@ export function TypedEdge({
   sourcePosition,
   targetPosition,
   style = {},
-  markerEnd,
   sourceHandleId,
   selected,
   data,
@@ -25,8 +24,8 @@ export function TypedEdge({
 }: EdgeProps) {
   // 优先从 data.sourceHandle 获取端口名称（由 onConnect 设置）
   // 回退到 sourceHandleId
-  const handleName = (data as Record<string, unknown>)?.sourceHandle as string | undefined
-    || sourceHandleId
+  const handleName =
+    ((data as Record<string, unknown>)?.sourceHandle as string | undefined) || sourceHandleId
 
   let strokeColor = '#94a3b8' // 默认灰色
 
@@ -93,10 +92,12 @@ export function TypedEdge({
           stroke: strokeColor,
           strokeWidth: selected ? 3 : 2,
           opacity: selected ? 1 : 0.8,
-          ...(isAnimating ? {
-            strokeDasharray: '8 4',
-            animation: 'flowDash 0.6s linear infinite',
-          } : {}),
+          ...(isAnimating
+            ? {
+                strokeDasharray: '8 4',
+                animation: 'flowDash 0.6s linear infinite',
+              }
+            : {}),
         }}
         markerEnd={`url(#${markerId})`}
       />

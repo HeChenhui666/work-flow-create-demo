@@ -20,7 +20,9 @@ export function useAutoSave({ nodes, edges, isDirty }: AutoSaveInput) {
           'workflow-autosave',
           JSON.stringify({ nodes, edges, savedAt: Date.now() }),
         )
-      } catch (_) {}
+      } catch {
+        // ignore storage errors
+      }
     }, 2000)
 
     return () => {

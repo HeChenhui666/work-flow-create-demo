@@ -20,7 +20,12 @@ function makeNode(id: string, type: keyof typeof NODE_DEFINITIONS): Node {
   }
 }
 
-function makeExtendedNode(id: string, type: string, inputs: { name: string; type: string }[], outputs: { name: string; type: string }[]): Node {
+function makeExtendedNode(
+  id: string,
+  type: string,
+  inputs: { name: string; type: string }[],
+  outputs: { name: string; type: string }[],
+): Node {
   return {
     id,
     type,
@@ -142,9 +147,17 @@ describe('useConnection', () => {
   })
 
   it('扩展节点 LoRALoader 的 MODEL 连线应被允许', () => {
-    const loraNode = makeExtendedNode('lora', 'LoRALoader',
-      [{ name: 'MODEL', type: 'MODEL' }, { name: 'CLIP', type: 'CLIP' }],
-      [{ name: 'MODEL', type: 'MODEL' }, { name: 'CLIP', type: 'CLIP' }],
+    const loraNode = makeExtendedNode(
+      'lora',
+      'LoRALoader',
+      [
+        { name: 'MODEL', type: 'MODEL' },
+        { name: 'CLIP', type: 'CLIP' },
+      ],
+      [
+        { name: 'MODEL', type: 'MODEL' },
+        { name: 'CLIP', type: 'CLIP' },
+      ],
     )
     const allNodes = [...nodes, loraNode]
     const connection: Connection = {

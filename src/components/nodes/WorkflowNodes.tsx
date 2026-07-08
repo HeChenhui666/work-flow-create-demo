@@ -11,8 +11,8 @@ import type { BaseNodeData } from './BaseNode'
 const ZOOM_FAR = 0.4
 const ZOOM_MID = 0.7
 
-const HANDLE_MID = 10   // 中景视图端口圆点尺寸
-const HANDLE_FULL = 14  // 近景视图端口圆点尺寸
+const HANDLE_MID = 10 // 中景视图端口圆点尺寸
+const HANDLE_FULL = 14 // 近景视图端口圆点尺寸
 
 interface WorkflowNodeProps extends NodeProps {
   data: BaseNodeData
@@ -49,10 +49,7 @@ const stopAllPointerEvents = (event: React.SyntheticEvent) => {
  * 组合结束后（onCompositionEnd）才提交最终值到外部。
  * 非 IME 输入时正常即时提交。
  */
-function useIMEAwareInput(
-  externalValue: string,
-  onExternalChange: (value: string) => void,
-) {
+function useIMEAwareInput(externalValue: string, onExternalChange: (value: string) => void) {
   const [localValue, setLocalValue] = useState(externalValue)
   const isComposingRef = useRef(false)
 
@@ -112,7 +109,9 @@ export function NodeStatusBadge({ nodeId }: { nodeId: string }) {
     <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center gap-1">
       <span className={`w-3 h-3 rounded-full ${colors[status]}`} />
       {status === 'running' && progress !== undefined && (
-        <span className="text-[9px] font-mono text-blue-600 bg-white px-0.5 rounded">{progress}%</span>
+        <span className="text-[9px] font-mono text-blue-600 bg-white px-0.5 rounded">
+          {progress}%
+        </span>
       )}
     </div>
   )
@@ -138,7 +137,10 @@ function FormContainer({ children }: { children: React.ReactNode }) {
  * LoadCheckpoint 节点 - 加载模型检查点
  * 输出: MODEL, CLIP, VAE
  */
-export const LoadCheckpointNode = memo(function LoadCheckpointNode({ data, id }: WorkflowNodeProps) {
+export const LoadCheckpointNode = memo(function LoadCheckpointNode({
+  data,
+  id,
+}: WorkflowNodeProps) {
   const { zoom } = useViewport()
   const { updateNodeData } = useWorkflowStore()
   const { label, color, config, outputs, executing } = safeData(data)
@@ -154,7 +156,10 @@ export const LoadCheckpointNode = memo(function LoadCheckpointNode({ data, id }:
 
   if (zoom < ZOOM_FAR) {
     return (
-      <div className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100" style={{ backgroundColor: color }}>
+      <div
+        className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100"
+        style={{ backgroundColor: color }}
+      >
         LCP
       </div>
     )
@@ -162,17 +167,33 @@ export const LoadCheckpointNode = memo(function LoadCheckpointNode({ data, id }:
 
   if (zoom < ZOOM_MID) {
     return (
-      <div className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+      <div
+        className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100"
+        style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+      >
         <div className="mb-1 text-xs font-semibold text-gray-800">{displayLabel}</div>
         {outputs.map((output) => (
-          <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_MID, height: HANDLE_MID }} />
+          <Handle
+            key={`${id}-out-${output.name}`}
+            type="source"
+            position={Position.Right}
+            id={output.name}
+            style={{
+              backgroundColor: PORT_COLORS[output.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+            }}
+          />
         ))}
       </div>
     )
   }
 
   return (
-    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div
+      className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100"
+      style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+    >
       <NodeStatusBadge nodeId={id} />
       <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <FormContainer>
@@ -191,7 +212,18 @@ export const LoadCheckpointNode = memo(function LoadCheckpointNode({ data, id }:
         </div>
       </FormContainer>
       {outputs.map((output, index) => (
-        <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL, top: `${((index + 1) / (outputs.length + 1)) * 100}%` }} />
+        <Handle
+          key={`${id}-out-${output.name}`}
+          type="source"
+          position={Position.Right}
+          id={output.name}
+          style={{
+            backgroundColor: PORT_COLORS[output.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+            top: `${((index + 1) / (outputs.length + 1)) * 100}%`,
+          }}
+        />
       ))}
     </div>
   )
@@ -218,29 +250,72 @@ export const CLIPEncodeNode = memo(function CLIPEncodeNode({ data, id }: Workflo
   // IME-aware inputs for Chinese text input
   const positivePromptInput = useIMEAwareInput(
     (config.positivePrompt as string) || '',
-    useCallback((value: string) => handleConfigChange('positivePrompt', value), [handleConfigChange]),
+    useCallback(
+      (value: string) => handleConfigChange('positivePrompt', value),
+      [handleConfigChange],
+    ),
   )
   const negativePromptInput = useIMEAwareInput(
     (config.negativePrompt as string) || '',
-    useCallback((value: string) => handleConfigChange('negativePrompt', value), [handleConfigChange]),
+    useCallback(
+      (value: string) => handleConfigChange('negativePrompt', value),
+      [handleConfigChange],
+    ),
   )
 
   if (zoom < ZOOM_FAR) {
-    return <div className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100" style={{ backgroundColor: color }}>CLP</div>
+    return (
+      <div
+        className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100"
+        style={{ backgroundColor: color }}
+      >
+        CLP
+      </div>
+    )
   }
 
   if (zoom < ZOOM_MID) {
     return (
-      <div className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+      <div
+        className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100"
+        style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+      >
         <div className="mb-1 text-xs font-semibold text-gray-800">{displayLabel}</div>
-        {inputs.map((input) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_MID, height: HANDLE_MID }} />)}
-        {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_MID, height: HANDLE_MID }} />)}
+        {inputs.map((input) => (
+          <Handle
+            key={`${id}-in-${input.name}`}
+            type="target"
+            position={Position.Left}
+            id={input.name}
+            style={{
+              backgroundColor: PORT_COLORS[input.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+            }}
+          />
+        ))}
+        {outputs.map((output) => (
+          <Handle
+            key={`${id}-out-${output.name}`}
+            type="source"
+            position={Position.Right}
+            id={output.name}
+            style={{
+              backgroundColor: PORT_COLORS[output.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+            }}
+          />
+        ))}
       </div>
     )
   }
 
   return (
-    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div
+      className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100"
+      style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+    >
       <NodeStatusBadge nodeId={id} />
       <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <FormContainer>
@@ -271,8 +346,32 @@ export const CLIPEncodeNode = memo(function CLIPEncodeNode({ data, id }: Workflo
           </div>
         </div>
       </FormContainer>
-      {inputs.map((input) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL }} />)}
-      {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL }} />)}
+      {inputs.map((input) => (
+        <Handle
+          key={`${id}-in-${input.name}`}
+          type="target"
+          position={Position.Left}
+          id={input.name}
+          style={{
+            backgroundColor: PORT_COLORS[input.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+          }}
+        />
+      ))}
+      {outputs.map((output) => (
+        <Handle
+          key={`${id}-out-${output.name}`}
+          type="source"
+          position={Position.Right}
+          id={output.name}
+          style={{
+            backgroundColor: PORT_COLORS[output.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+          }}
+        />
+      ))}
     </div>
   )
 })
@@ -296,20 +395,45 @@ export const EmptyLatentNode = memo(function EmptyLatentNode({ data, id }: Workf
   )
 
   if (zoom < ZOOM_FAR) {
-    return <div className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100" style={{ backgroundColor: color }}>LAT</div>
+    return (
+      <div
+        className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100"
+        style={{ backgroundColor: color }}
+      >
+        LAT
+      </div>
+    )
   }
 
   if (zoom < ZOOM_MID) {
     return (
-      <div className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+      <div
+        className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100"
+        style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+      >
         <div className="mb-1 text-xs font-semibold text-gray-800">{displayLabel}</div>
-        {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_MID, height: HANDLE_MID }} />)}
+        {outputs.map((output) => (
+          <Handle
+            key={`${id}-out-${output.name}`}
+            type="source"
+            position={Position.Right}
+            id={output.name}
+            style={{
+              backgroundColor: PORT_COLORS[output.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+            }}
+          />
+        ))}
       </div>
     )
   }
 
   return (
-    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div
+      className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100"
+      style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+    >
       <NodeStatusBadge nodeId={id} />
       <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <FormContainer>
@@ -345,7 +469,19 @@ export const EmptyLatentNode = memo(function EmptyLatentNode({ data, id }: Workf
           </div>
         </div>
       </FormContainer>
-      {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL }} />)}
+      {outputs.map((output) => (
+        <Handle
+          key={`${id}-out-${output.name}`}
+          type="source"
+          position={Position.Right}
+          id={output.name}
+          style={{
+            backgroundColor: PORT_COLORS[output.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+          }}
+        />
+      ))}
     </div>
   )
 })
@@ -383,21 +519,59 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
   const [selectedPreset, setSelectedPreset] = useState<string>('')
 
   if (zoom < ZOOM_FAR) {
-    return <div className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100" style={{ backgroundColor: color }}>KSM</div>
+    return (
+      <div
+        className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100"
+        style={{ backgroundColor: color }}
+      >
+        KSM
+      </div>
+    )
   }
 
   if (zoom < ZOOM_MID) {
     return (
-      <div className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+      <div
+        className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100"
+        style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+      >
         <div className="mb-1 text-xs font-semibold text-gray-800">{displayLabel}</div>
-        {inputs.map((input, index) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_MID, height: HANDLE_MID, top: `${((index + 1) / (inputs.length + 1)) * 100}%` }} />)}
-        {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_MID, height: HANDLE_MID }} />)}
+        {inputs.map((input, index) => (
+          <Handle
+            key={`${id}-in-${input.name}`}
+            type="target"
+            position={Position.Left}
+            id={input.name}
+            style={{
+              backgroundColor: PORT_COLORS[input.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+              top: `${((index + 1) / (inputs.length + 1)) * 100}%`,
+            }}
+          />
+        ))}
+        {outputs.map((output) => (
+          <Handle
+            key={`${id}-out-${output.name}`}
+            type="source"
+            position={Position.Right}
+            id={output.name}
+            style={{
+              backgroundColor: PORT_COLORS[output.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+            }}
+          />
+        ))}
       </div>
     )
   }
 
   return (
-    <div className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div
+      className="nowheel relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100"
+      style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+    >
       <NodeStatusBadge nodeId={id} />
       <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       {kSamplerStatus === 'running' && kSamplerProgress !== undefined && (
@@ -421,12 +595,24 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
             const preset = KSAMPLER_PRESETS[index]
             if (!preset) return
             setSelectedPreset(e.target.value)
-            updateNodeData(id, { config: { ...config, steps: preset.steps, cfg: preset.cfg, sampler: preset.sampler, scheduler: preset.scheduler } })
+            updateNodeData(id, {
+              config: {
+                ...config,
+                steps: preset.steps,
+                cfg: preset.cfg,
+                sampler: preset.sampler,
+                scheduler: preset.scheduler,
+              },
+            })
           }}
         >
-          <option value="" disabled>选择预设...</option>
+          <option value="" disabled>
+            选择预设...
+          </option>
           {KSAMPLER_PRESETS.map((preset, index) => (
-            <option key={preset.name} value={String(index)}>{preset.name}</option>
+            <option key={preset.name} value={String(index)}>
+              {preset.name}
+            </option>
           ))}
         </select>
 
@@ -490,25 +676,58 @@ export const KSamplerNode = memo(function KSamplerNode({ data, id }: WorkflowNod
                 title="随机种子"
                 onClick={() => handleConfigChange('seed', Math.floor(Math.random() * 2 ** 32))}
                 className="text-xs px-1.5 py-1 bg-gray-100 hover:bg-gray-200 rounded"
-              >🎲</button>
+              >
+                🎲
+              </button>
               <button
                 title="复制种子"
                 onClick={() => navigator.clipboard.writeText(String((config.seed as number) ?? -1))}
                 className="text-xs px-1.5 py-1 bg-gray-100 hover:bg-gray-200 rounded"
-              >📋</button>
+              >
+                📋
+              </button>
             </div>
           </div>
         </div>
 
         {/* 验证警告 */}
-        {validateKSamplerConfig({ steps: (config.steps as number) ?? 20, cfg: (config.cfg as number) ?? 7 }).map((warning, index) => (
+        {validateKSamplerConfig({
+          steps: (config.steps as number) ?? 20,
+          cfg: (config.cfg as number) ?? 7,
+        }).map((warning, index) => (
           <div key={index} className="text-[10px] text-amber-600 flex items-start gap-1 mt-1">
-            <span>⚠️</span><span>{warning}</span>
+            <span>⚠️</span>
+            <span>{warning}</span>
           </div>
         ))}
       </FormContainer>
-      {inputs.map((input, index) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL, top: `${((index + 1) / (inputs.length + 1)) * 100}%` }} />)}
-      {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL }} />)}
+      {inputs.map((input, index) => (
+        <Handle
+          key={`${id}-in-${input.name}`}
+          type="target"
+          position={Position.Left}
+          id={input.name}
+          style={{
+            backgroundColor: PORT_COLORS[input.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+            top: `${((index + 1) / (inputs.length + 1)) * 100}%`,
+          }}
+        />
+      ))}
+      {outputs.map((output) => (
+        <Handle
+          key={`${id}-out-${output.name}`}
+          type="source"
+          position={Position.Right}
+          id={output.name}
+          style={{
+            backgroundColor: PORT_COLORS[output.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+          }}
+        />
+      ))}
     </div>
   )
 })
@@ -524,26 +743,89 @@ export const VAEDecodeNode = memo(function VAEDecodeNode({ data, id }: WorkflowN
   const displayLabel = NODE_TYPE_LABELS.VAEDecode || label
 
   if (zoom < ZOOM_FAR) {
-    return <div className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100" style={{ backgroundColor: color }}>VAE</div>
+    return (
+      <div
+        className="flex h-12 w-24 items-center justify-center rounded text-xs font-bold text-white transition-opacity duration-100"
+        style={{ backgroundColor: color }}
+      >
+        VAE
+      </div>
+    )
   }
 
   if (zoom < ZOOM_MID) {
     return (
-      <div className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+      <div
+        className="relative flex min-w-[160px] flex-col rounded-lg border-2 bg-white p-2 shadow-sm transition-opacity duration-100"
+        style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+      >
         <div className="mb-1 text-xs font-semibold text-gray-800">{displayLabel}</div>
-        {inputs.map((input, index) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_MID, height: HANDLE_MID, top: `${((index + 1) / (inputs.length + 1)) * 100}%` }} />)}
-        {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_MID, height: HANDLE_MID }} />)}
+        {inputs.map((input, index) => (
+          <Handle
+            key={`${id}-in-${input.name}`}
+            type="target"
+            position={Position.Left}
+            id={input.name}
+            style={{
+              backgroundColor: PORT_COLORS[input.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+              top: `${((index + 1) / (inputs.length + 1)) * 100}%`,
+            }}
+          />
+        ))}
+        {outputs.map((output) => (
+          <Handle
+            key={`${id}-out-${output.name}`}
+            type="source"
+            position={Position.Right}
+            id={output.name}
+            style={{
+              backgroundColor: PORT_COLORS[output.type as PortType],
+              width: HANDLE_MID,
+              height: HANDLE_MID,
+            }}
+          />
+        ))}
       </div>
     )
   }
 
   return (
-    <div className="relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100" style={{ borderColor: color, ...(executing ? executingStyle : {}) }}>
+    <div
+      className="relative w-full rounded-lg border-2 bg-white p-3 shadow-md transition-opacity duration-100"
+      style={{ borderColor: color, ...(executing ? executingStyle : {}) }}
+    >
       <NodeStatusBadge nodeId={id} />
       <div className="mb-2 text-sm font-bold text-gray-900 truncate">{displayLabel}</div>
       <div className="text-xs text-gray-400">将潜空间数据解码为像素图像</div>
-      {inputs.map((input, index) => <Handle key={`${id}-in-${input.name}`} type="target" position={Position.Left} id={input.name} style={{ backgroundColor: PORT_COLORS[input.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL, top: `${((index + 1) / (inputs.length + 1)) * 100}%` }} />)}
-      {outputs.map((output) => <Handle key={`${id}-out-${output.name}`} type="source" position={Position.Right} id={output.name} style={{ backgroundColor: PORT_COLORS[output.type as PortType], width: HANDLE_FULL, height: HANDLE_FULL }} />)}
+      {inputs.map((input, index) => (
+        <Handle
+          key={`${id}-in-${input.name}`}
+          type="target"
+          position={Position.Left}
+          id={input.name}
+          style={{
+            backgroundColor: PORT_COLORS[input.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+            top: `${((index + 1) / (inputs.length + 1)) * 100}%`,
+          }}
+        />
+      ))}
+      {outputs.map((output) => (
+        <Handle
+          key={`${id}-out-${output.name}`}
+          type="source"
+          position={Position.Right}
+          id={output.name}
+          style={{
+            backgroundColor: PORT_COLORS[output.type as PortType],
+            width: HANDLE_FULL,
+            height: HANDLE_FULL,
+          }}
+        />
+      ))}
     </div>
   )
 })
