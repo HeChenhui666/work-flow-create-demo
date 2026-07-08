@@ -2,9 +2,31 @@ import { describe, it, expect } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useConnection } from '../useConnection'
 import type { Node, Connection } from '@xyflow/react'
+import { NODE_DEFINITIONS } from '../../schemas/nodeDefinitions'
 
-function makeNode(id: string, type: string): Node {
-  return { id, type, position: { x: 0, y: 0 }, data: {} }
+function makeNode(id: string, type: keyof typeof NODE_DEFINITIONS): Node {
+  const def = NODE_DEFINITIONS[type]
+  return {
+    id,
+    type,
+    position: { x: 0, y: 0 },
+    data: {
+      label: type,
+      color: def.color,
+      inputs: def.inputs,
+      outputs: def.outputs,
+      config: { ...def.defaultConfig },
+    },
+  }
+}
+
+function makeExtendedNode(id: string, type: string, inputs: { name: string; type: string }[], outputs: { name: string; type: string }[]): Node {
+  return {
+    id,
+    type,
+    position: { x: 0, y: 0 },
+    data: { label: type, color: '#000', inputs, outputs, config: {} },
+  }
 }
 
 describe('useConnection', () => {
@@ -53,16 +75,6 @@ describe('useConnection', () => {
     const connection: Connection = {
       source: 'load',
       sourceHandle: 'MODEL',
-      target: 'clip',
-      targetHandle: 'CLIP',
-    }
-    expect(isValidConnection(connection, nodes)).toBe(false)
-  })
-
-  it('类型不匹配的连线应被拒绝 (LATENT → CONDITIONING)', () => {
-    const connection: Connection = {
-      source: 'latent',
-      sourceHandle: 'LATENT',
       target: 'clip',
       targetHandle: 'CLIP',
     }
@@ -127,5 +139,32 @@ describe('useConnection', () => {
       targetHandle: 'VAE',
     }
     expect(isValidConnection(connection, nodes)).toBe(true)
+  })
+
+  it('扩展节点 LoRALoader 的 MODEL 连线应被允许', () => {
+    const loraNode = makeExtendedNode('lora', 'LoRALoader',
+      [{ name: 'MODEL', type: 'MODEL' }, { name: 'CLIP', type: 'CLIP' }],
+      [{ name: 'MODEL', type: 'MODEL' }, { name: 'CLIP', type: 'CLIP' }],
+    )
+    const allNodes = [...nodes, loraNode]
+    const connection: Connection = {
+      source: 'load',
+      sourceHandle: 'MODEL',
+      target: 'lora',
+      targetHandle: 'MODEL',
+    }
+    expect(isValidConnection(connection, allNodes)).toBe(true)
+  })
+
+  it('扩展节点之间类型不匹配应被拒绝', () => {
+    const imageNode = makeExtendedNode('img', 'ImageLoad', [], [{ name: 'IMAGE', type: 'IMAGE' }])
+    const allNodes = [...nodes, imageNode]
+    const connection: Connection = {
+      source: 'img',
+      sourceHandle: 'IMAGE',
+      target: 'ksampler',
+      targetHandle: 'MODEL',
+    }
+    expect(isValidConnection(connection, allNodes)).toBe(false)
   })
 })
