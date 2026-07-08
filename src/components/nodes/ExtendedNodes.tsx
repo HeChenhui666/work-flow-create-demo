@@ -5,6 +5,16 @@ import { useWorkflowStore } from '../../stores/workflowStore'
 
 export function LoRALoaderNode({ id, data }: NodeProps) {
   const nodeData = data as Record<string, unknown>
+  const { updateNodeData } = useWorkflowStore()
+  const config = (nodeData.config as Record<string, unknown>) ?? {}
+
+  const handleConfigChange = useCallback(
+    (key: string, value: unknown) => {
+      updateNodeData(id, { config: { ...config, [key]: value } })
+    },
+    [id, config, updateNodeData],
+  )
+
   return (
     <div className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm" style={{ borderColor: '#8b5cf6' }}>
       <NodeStatusBadge nodeId={id} />
@@ -13,9 +23,36 @@ export function LoRALoaderNode({ id, data }: NodeProps) {
       </div>
       <Handle type="target" position={Position.Left} id="MODEL" style={{ top: '38%' }} />
       <Handle type="target" position={Position.Left} id="CLIP" style={{ top: '62%' }} />
-      <div className="px-3 py-2 text-xs text-gray-600 space-y-1">
-        <div className="truncate">LoRA: <span className="text-gray-400">{String(nodeData.loraName ?? 'example.safetensors')}</span></div>
-        <div>强度: <span className="text-gray-400">{String(nodeData.strength ?? 1.0)}</span></div>
+      <div
+        className="px-3 py-2 text-xs text-gray-600 space-y-2"
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div>
+          <label className="block text-[10px] text-gray-400 mb-0.5">LoRA 模型</label>
+          <select
+            className="w-full rounded border border-gray-200 px-1.5 py-0.5 text-xs"
+            value={(config.loraName as string) ?? 'example.safetensors'}
+            onChange={(e) => handleConfigChange('loraName', e.target.value)}
+          >
+            <option value="example.safetensors">example.safetensors</option>
+            <option value="detail_tweaker.safetensors">Detail Tweaker</option>
+            <option value="add_detail.safetensors">Add Detail</option>
+            <option value="epi_noiseoffset.safetensors">Noise Offset</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] text-gray-400 mb-0.5">强度</label>
+          <input
+            type="number"
+            className="w-full rounded border border-gray-200 px-1.5 py-0.5 text-xs"
+            value={(config.strength as number) ?? 1.0}
+            min={0}
+            max={2}
+            step={0.1}
+            onChange={(e) => handleConfigChange('strength', Number(e.target.value))}
+          />
+        </div>
       </div>
       <Handle type="source" position={Position.Right} id="MODEL" style={{ top: '38%' }} />
       <Handle type="source" position={Position.Right} id="CLIP" style={{ top: '62%' }} />
@@ -151,6 +188,16 @@ export function ImagePreviewNode({ id, data }: NodeProps) {
 
 export function UpscalerNode({ id, data }: NodeProps) {
   const nodeData = data as Record<string, unknown>
+  const { updateNodeData } = useWorkflowStore()
+  const config = (nodeData.config as Record<string, unknown>) ?? {}
+
+  const handleConfigChange = useCallback(
+    (key: string, value: unknown) => {
+      updateNodeData(id, { config: { ...config, [key]: value } })
+    },
+    [id, config, updateNodeData],
+  )
+
   return (
     <div className="nowheel relative w-full bg-white rounded-lg border-2 shadow-sm" style={{ borderColor: '#06b6d4' }}>
       <NodeStatusBadge nodeId={id} />
@@ -158,9 +205,36 @@ export function UpscalerNode({ id, data }: NodeProps) {
       <div className="px-3 py-1.5 rounded-t-md text-white text-xs font-semibold truncate" style={{ backgroundColor: '#06b6d4' }}>
         放大器
       </div>
-      <div className="px-3 py-2 text-xs text-gray-600 space-y-1">
-        <div>倍率: <span className="text-gray-400">{String(nodeData.scale ?? 2)}x</span></div>
-        <div className="truncate">模型: <span className="text-gray-400">{String(nodeData.model ?? 'RealESRGAN')}</span></div>
+      <div
+        className="px-3 py-2 text-xs text-gray-600 space-y-2"
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div>
+          <label className="block text-[10px] text-gray-400 mb-0.5">放大倍率</label>
+          <select
+            className="w-full rounded border border-gray-200 px-1.5 py-0.5 text-xs"
+            value={(config.scale as number) ?? 2}
+            onChange={(e) => handleConfigChange('scale', Number(e.target.value))}
+          >
+            <option value={2}>2x</option>
+            <option value={3}>3x</option>
+            <option value={4}>4x</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] text-gray-400 mb-0.5">放大模型</label>
+          <select
+            className="w-full rounded border border-gray-200 px-1.5 py-0.5 text-xs"
+            value={(config.model as string) ?? 'RealESRGAN_x4plus'}
+            onChange={(e) => handleConfigChange('model', e.target.value)}
+          >
+            <option value="RealESRGAN_x4plus">RealESRGAN x4plus</option>
+            <option value="RealESRGAN_x4plus_anime">RealESRGAN Anime</option>
+            <option value="ESRGAN_4x">ESRGAN 4x</option>
+            <option value="SwinIR_4x">SwinIR 4x</option>
+          </select>
+        </div>
       </div>
       <Handle type="source" position={Position.Right} id="IMAGE" />
     </div>
