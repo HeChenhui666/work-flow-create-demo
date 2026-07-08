@@ -183,11 +183,11 @@ export default function App() {
       toast.error('找不到画布元素，无法导出 PNG')
       return
     }
-    const success = await exportCanvasToPng(canvasElement)
+    const success = await exportCanvasToPng(canvasElement, reactFlowInstanceRef.current, nodes)
     if (success) {
       toast.success('PNG 导出成功')
     }
-  }, [])
+  }, [nodes])
 
   const handleLoadTemplate = useCallback((template: WorkflowTemplate) => {
     useWorkflowStore.getState().commit()
