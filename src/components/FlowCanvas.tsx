@@ -22,6 +22,7 @@ import { useWorkflowStore } from '../stores/workflowStore'
 import { useConnection } from '../hooks/useConnection'
 import { useDnD } from '../hooks/useDnD'
 import { NODE_DEFINITIONS, type NodeType } from '../schemas/nodeDefinitions'
+import { nodeRegistry } from '../schemas/nodeRegistry'
 import { LoadCheckpointNode, CLIPEncodeNode, EmptyLatentNode, KSamplerNode, VAEDecodeNode } from './nodes/WorkflowNodes'
 import { NoteNode } from './nodes/NoteNode'
 import { LoRALoaderNode, ImageLoadNode, ImagePreviewNode, UpscalerNode } from './nodes/ExtendedNodes'
@@ -448,6 +449,8 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
             if (nodeType && NODE_DEFINITIONS[nodeType]) {
               return NODE_DEFINITIONS[nodeType].color
             }
+            const registryDef = node.type ? nodeRegistry.get(node.type) : undefined
+            if (registryDef) return registryDef.color
             return '#94a3b8'
           }}
           maskColor="rgba(0, 0, 0, 0.1)"

@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
 import type { Node, Edge } from '@xyflow/react'
+import { toast } from 'sonner'
 import { useExecutionStore } from '../stores/executionStore'
 
 function buildTopoLevels(nodes: Node[], edges: Edge[]): Node[][] {
@@ -107,6 +108,10 @@ export function useMockExecution() {
     } finally {
       abortRef.current = null
       useExecutionStore.getState().setRunning(false)
+      if (!signal.aborted) {
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1)
+        toast.success(`执行完成，总耗时 ${totalTime}s`)
+      }
     }
   }, [])
 
