@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import type { Node, Edge } from '@xyflow/react'
 import { useExecutionStore } from '../stores/executionStore'
 
@@ -43,54 +43,79 @@ const NODE_DURATIONS: Record<string, number> = {
   EmptyLatent:    100,
   KSampler:       3000,
   VAEDecode:      600,
+  LoRALoader:     800,
+  ImageLoad:      200,
+  ImagePreview:   100,
+  Upscaler:       2000,
   default:        500,
 }
 
 export function useMockExecution() {
-  const { setRunning, setNodeStatus, setNodeProgress, addLog, reset } = useExecutionStore.getState()
+  const abortRef = useRef<AbortController | null>(null)
 
   const runExecution = useCallback(async (nodes: Node[], edges: Edge[]) => {
     if (nodes.length === 0) return
 
-    reset()
-    setRunning(true)
-    const startTime = Date.now()
+    const store = useExecutionStore.getState()
+    store.reset()
+    store.setRunning(true)
 
+    const controller = new AbortController()
+    abortRef.current = controller
+    const { signal } = controller
+
+    const startTime = Date.now()
     const levels = buildTopoLevels(nodes, edges)
 
-    for (const level of levels) {
-      await Promise.all(
-        level.map(async (node) => {
-          const type = node.type ?? 'default'
-          const duration = NODE_DURATIONS[type] ?? NODE_DURATIONS.default
-          const t0 = Date.now()
+    try {
+      for (const level of levels) {
+        if (signal.aborted) break
 
-          setNodeStatus(node.id, 'running')
+        await Promise.all(
+          level.map(async (node) => {
+            if (signal.aborted) return
 
-          if (type === 'KSampler') {
-            const steps = ((node.data?.config as Record<string, number>)?.steps ?? 20)
-            const stepDelay = duration / steps
-            for (let i = 1; i <= steps; i++) {
-              await new Promise<void>((r) => setTimeout(r, stepDelay))
-              setNodeProgress(node.id, Math.round((i / steps) * 100))
+            const type = node.type ?? 'default'
+            const duration = NODE_DURATIONS[type] ?? NODE_DURATIONS.default
+            const t0 = Date.now()
+
+            useExecutionStore.getState().setNodeStatus(node.id, 'running')
+
+            if (type === 'KSampler') {
+              const steps = ((node.data?.config as Record<string, number>)?.steps ?? 20)
+              const stepDelay = duration / steps
+              for (let i = 1; i <= steps; i++) {
+                if (signal.aborted) return
+                await new Promise<void>((r) => setTimeout(r, stepDelay))
+                useExecutionStore.getState().setNodeProgress(node.id, Math.round((i / steps) * 100))
+              }
+            } else {
+              await new Promise<void>((r) => setTimeout(r, duration))
             }
-          } else {
-            await new Promise<void>((r) => setTimeout(r, duration))
-          }
 
-          setNodeStatus(node.id, 'success')
-          const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
-          addLog({
-            nodeId: node.id,
-            message: `${type} ✓ 完成 (${elapsed}s)`,
-            timestamp: Date.now() - startTime,
-          })
-        }),
-      )
+            if (signal.aborted) return
+            useExecutionStore.getState().setNodeStatus(node.id, 'success')
+            const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
+            useExecutionStore.getState().addLog({
+              nodeId: node.id,
+              message: `${type} ✓ 完成 (${elapsed}s)`,
+              timestamp: Date.now() - startTime,
+            })
+          }),
+        )
+      }
+    } finally {
+      abortRef.current = null
+      useExecutionStore.getState().setRunning(false)
     }
-
-    setRunning(false)
   }, [])
 
-  return { runExecution }
+  const stopExecution = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort()
+    }
+    useExecutionStore.getState().reset()
+  }, [])
+
+  return { runExecution, stopExecution }
 }

@@ -37,7 +37,7 @@ const workflowImportSchema = z.object({
 
 export default function App() {
   const { exportJson, importJson, fileInputRef, handleFileChange } = useJsonIO()
-  const { runExecution } = useMockExecution()
+  const { runExecution, stopExecution } = useMockExecution()
   const { addBookmark } = useViewportStore()
   const { validationErrors, nodes, edges, isDirty } = useWorkflowStore()
   const isRunning = useExecutionStore((s) => s.isRunning)
@@ -95,8 +95,8 @@ export default function App() {
   }, [isRunning, runExecution, nodes, edges])
 
   const handleStop = useCallback(() => {
-    useExecutionStore.getState().reset()
-  }, [])
+    stopExecution()
+  }, [stopExecution])
 
   // 保存 ReactFlow instance 引用
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null)

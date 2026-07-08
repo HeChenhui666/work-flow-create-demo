@@ -308,8 +308,9 @@ export function FlowCanvas({ onInstanceReady }: { onInstanceReady?: (instance: R
     [setSelectedNodeId],
   )
 
-  // 对齐操作回调
+  // 对齐操作回调（记录 undo 历史）
   const handleAlign = useCallback((alignedNodes: Node[]) => {
+    useWorkflowStore.getState().commit()
     setNodes((nds) => nds.map((n) => {
       const aligned = alignedNodes.find((a) => a.id === n.id)
       return aligned ? { ...n, position: aligned.position } : n
