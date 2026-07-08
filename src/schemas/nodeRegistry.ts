@@ -1,4 +1,5 @@
 import type { PortDef } from './nodeDefinitions'
+import type { NodeEventType, NodeEventHandler } from '../stores/nodeEventBus'
 
 export interface RegistryNodeDef {
   type: string
@@ -9,6 +10,10 @@ export interface RegistryNodeDef {
   outputs: PortDef[]
   defaultConfig: Record<string, unknown>
   tags?: string[]
+  hooks?: Partial<Record<NodeEventType, NodeEventHandler<any>>>
+  validate?: (config: Record<string, unknown>) => string[]
+  version?: string
+  deprecated?: boolean
 }
 
 export class NodeRegistry {

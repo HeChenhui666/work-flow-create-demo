@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react'
 import type { Node, Edge } from '@xyflow/react'
 import { toast } from 'sonner'
 import { useExecutionStore } from '../stores/executionStore'
+import { useNodeEventBus } from '../stores/nodeEventBus'
 
 function buildTopoLevels(nodes: Node[], edges: Edge[]): Node[][] {
   const inDegree = new Map<string, number>()
@@ -81,6 +82,7 @@ export function useMockExecution() {
             const t0 = Date.now()
 
             useExecutionStore.getState().setNodeStatus(node.id, 'running')
+            useNodeEventBus.getState().emit('before-execute', { nodeId: node.id })
 
             if (type === 'KSampler') {
               const steps = ((node.data?.config as Record<string, number>)?.steps ?? 20)
@@ -88,7 +90,9 @@ export function useMockExecution() {
               for (let i = 1; i <= steps; i++) {
                 if (signal.aborted) return
                 await new Promise<void>((r) => setTimeout(r, stepDelay))
-                useExecutionStore.getState().setNodeProgress(node.id, Math.round((i / steps) * 100))
+                const percent = Math.round((i / steps) * 100)
+                useExecutionStore.getState().setNodeProgress(node.id, percent)
+                useNodeEventBus.getState().emit('execute-progress', { nodeId: node.id, percent })
               }
             } else {
               await new Promise<void>((r) => setTimeout(r, duration))
@@ -96,12 +100,23 @@ export function useMockExecution() {
 
             if (signal.aborted) return
             useExecutionStore.getState().setNodeStatus(node.id, 'success')
-            const elapsed = ((Date.now() - t0) / 1000).toFixed(2)
+            const elapsed = ((Date.now() - t0) / 1000)
             useExecutionStore.getState().addLog({
               nodeId: node.id,
-              message: `${type} ✓ 完成 (${elapsed}s)`,
+              message: `${type} ✓ 完成 (${elapsed.toFixed(2)}s)`,
               timestamp: Date.now() - startTime,
             })
+            useNodeEventBus.getState().emit('execute-success', { nodeId: node.id, duration: elapsed })
+
+            // 通知下游节点 upstream-ready
+            const downstreamEdges = edges.filter((e) => e.source === node.id)
+            for (const edge of downstreamEdges) {
+              useNodeEventBus.getState().emit('upstream-ready', {
+                nodeId: edge.target,
+                port: edge.targetHandle ?? '',
+                fromNodeId: node.id,
+              })
+            }
           }),
         )
       }
